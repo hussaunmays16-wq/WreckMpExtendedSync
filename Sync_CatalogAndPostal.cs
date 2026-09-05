@@ -294,6 +294,39 @@ namespace WreckMPExtendedSync
 					cachedOrderList = orderListObj.GetComponent<PlayMakerArrayListProxy>();
 					if (cachedOrderList != null) return cachedOrderList;
 				}
+				string[] scanParents = new string[] { "YARD", "STORE" };
+				for (int p = 0; p < scanParents.Length; p++)
+				{
+					GameObject parentObj = GameObject.Find(scanParents[p]);
+					if (parentObj != null)
+					{
+						PlayMakerArrayListProxy[] proxies = parentObj.GetComponentsInChildren<PlayMakerArrayListProxy>(true);
+						for (int i = 0; i < proxies.Length; i++)
+						{
+							if (proxies[i] != null && (proxies[i].name == "OrderList" || proxies[i].name == "Magazine" || proxies[i].referenceName == "OrderList"))
+							{
+								cachedOrderList = proxies[i];
+								return cachedOrderList;
+							}
+						}
+					}
+				}
+				PlayMakerArrayListProxy[] allProxies = Resources.FindObjectsOfTypeAll<PlayMakerArrayListProxy>();
+				if (allProxies != null)
+				{
+					for (int j = 0; j < allProxies.Length; j++)
+					{
+						PlayMakerArrayListProxy p = allProxies[j];
+						if (p != null && p.gameObject != null && p.gameObject.hideFlags == HideFlags.None)
+						{
+							if (p.gameObject.name == "OrderList" || p.gameObject.name == "Magazine" || p.referenceName == "OrderList")
+							{
+								cachedOrderList = p;
+								return cachedOrderList;
+							}
+						}
+					}
+				}
 			}
 			catch (Exception ex)
 			{
@@ -362,6 +395,43 @@ namespace WreckMPExtendedSync
 					if (cachedButtonOrderFsm == null)
 					{
 						GameObject gameObject = GameObject.Find("Sheets/Magazine/ButtonOrder");
+						if (gameObject == null)
+						{
+							string[] scanParents = new string[] { "YARD", "STORE" };
+							for (int p = 0; p < scanParents.Length; p++)
+							{
+								GameObject parentObj = GameObject.Find(scanParents[p]);
+								if (parentObj != null)
+								{
+									Transform[] children = parentObj.GetComponentsInChildren<Transform>(true);
+									for (int c = 0; c < children.Length; c++)
+									{
+										if (children[c] != null && children[c].name == "ButtonOrder")
+										{
+											gameObject = children[c].gameObject;
+											break;
+										}
+									}
+								}
+								if (gameObject != null) break;
+							}
+						}
+						if (gameObject == null)
+						{
+							GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+							if (allObjects != null)
+							{
+								for (int o = 0; o < allObjects.Length; o++)
+								{
+									GameObject g = allObjects[o];
+									if (g != null && g.hideFlags == HideFlags.None && g.name == "ButtonOrder")
+									{
+										gameObject = g;
+										break;
+									}
+								}
+							}
+						}
 						if (gameObject != null)
 						{
 							cachedButtonOrderFsm = gameObject.GetComponent<PlayMakerFSM>();
@@ -486,16 +556,40 @@ namespace WreckMPExtendedSync
 					if (cachedEnvelope == null && Time.time > nextEnvelopeScanTime)
 					{
 						nextEnvelopeScanTime = Time.time + 2f;
-						GameObject gameObject = GameObject.Find("YARD");
-						if (gameObject != null)
+						string[] scanParents = new string[] { "YARD", "STORE" };
+						for (int sp = 0; sp < scanParents.Length; sp++)
 						{
-							Transform[] componentsInChildren = gameObject.GetComponentsInChildren<Transform>(includeInactive: true);
-							foreach (Transform transform in componentsInChildren)
+							GameObject parentObj = GameObject.Find(scanParents[sp]);
+							if (parentObj != null)
 							{
-								if (transform != null && transform.name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
+								Transform[] componentsInChildren = parentObj.GetComponentsInChildren<Transform>(includeInactive: true);
+								foreach (Transform transform in componentsInChildren)
 								{
-									cachedEnvelope = transform.gameObject;
-									break;
+									if (transform != null && transform.name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
+									{
+										cachedEnvelope = transform.gameObject;
+										break;
+									}
+								}
+							}
+							if (cachedEnvelope != null) break;
+						}
+						if (cachedEnvelope == null)
+						{
+							GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+							if (allObjects != null)
+							{
+								for (int o = 0; o < allObjects.Length; o++)
+								{
+									GameObject g = allObjects[o];
+									if (g != null && g.hideFlags == HideFlags.None && g.name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
+									{
+										if (g.transform.root != null && g.transform.root.name != "FPSPlayer")
+										{
+											cachedEnvelope = g;
+											break;
+										}
+									}
 								}
 							}
 						}
@@ -692,6 +786,7 @@ namespace WreckMPExtendedSync
 				}
 				partsOrderPlacedEvent.Send(gameEventWriter, 0uL, safe: true);
 				ExtendedSyncDebugHUD.Log("<color=#33ff33>OUT [PARTS]: Заказ сформирован (" + list.Count + " дет.)</color>");
+				FileLogger.WriteLine("TX OrderPlaced: items=" + list.Count + " [" + string.Join(", ", list.ToArray()) + "] pos=" + pos.ToString("F2"), "INFO");
 			}
 
 			if (localEnv != null)
@@ -774,6 +869,7 @@ namespace WreckMPExtendedSync
 			}
 
 			ExtendedSyncDebugHUD.Log("<color=#33ff33>IN [PARTS]: Напарник заказал " + (list.Count > 0 ? list.Count : count) + " деталей по каталогу!</color>");
+			FileLogger.WriteLine("RX OrderPlaced: items=" + (list.Count > 0 ? list.Count : count) + " [" + string.Join(", ", list.ToArray()) + "] pos=" + pos.ToString("F2"), "INFO");
 			isNetworkApplying = true;
 			try
 			{
@@ -2215,6 +2311,7 @@ namespace WreckMPExtendedSync
 				writer.Write(rot.w);
 				catalogPartUnboxEvent.Send(writer, 0uL, safe: true);
 				ExtendedSyncDebugHUD.Log("<color=#33ff33>OUT [AMIS AUTO]: Распаковка " + cleanPartName + " [#" + itemIndex + "] на " + pos.ToString("F1") + "</color>");
+				FileLogger.WriteLine("TX CatalogUnbox: part=" + cleanPartName + " [#" + itemIndex + "] pos=" + pos.ToString("F2"), "INFO");
 			}
 		}
 
@@ -2243,6 +2340,7 @@ namespace WreckMPExtendedSync
 			}
 
 			ExtendedSyncDebugHUD.Log("<color=#33ff33>IN [AMIS AUTO]: Получена распаковка " + cleanPartName + " [#" + itemIndex + "] на " + pos.ToString("F1") + "</color>");
+			FileLogger.WriteLine("RX CatalogUnbox: part=" + cleanPartName + " [#" + itemIndex + "] pos=" + pos.ToString("F2"), "INFO");
 			isNetworkApplying = true;
 			try
 			{
@@ -2451,6 +2549,7 @@ namespace WreckMPExtendedSync
 				string boxName = reader.ReadString();
 				string partName = (reader.BaseStream.Position < reader.BaseStream.Length) ? reader.ReadString() : "";
 				string clean = MatchAmisCatalogPart(!string.IsNullOrEmpty(partName) ? partName : ExtractPartNameFromBox(boxName));
+				FileLogger.WriteLine("RX ParcelUnbox: box=" + boxName + " part=" + clean + " pos=" + b.ToString("F2"), "INFO");
 				HandleCatalogPartUnbox(clean, 0, b, Quaternion.identity);
 				DestroySpectatorBox(b, clean, 0);
 			}
