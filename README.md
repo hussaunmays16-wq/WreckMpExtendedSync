@@ -1,4 +1,4 @@
-﻿# WreckMP Extended Sync
+# WreckMP Extended Sync
 
 **WreckMP Extended Sync** — модификация для кооперативного режима [My Summer Car](https://store.steampowered.com/app/516750/My_Summer_Car/) поверх WreckMP, обеспечивающая расширенную синхронизацию игрового мира.
 
@@ -7,7 +7,7 @@
 - **Требования:**
   - My Summer Car
   - MSCLoader (0.4.x+)
-  - WreckMP (v0.8.0-dev / релизная сборка)
+  - WreckMP (v0.2.15)
   - BetterCheatBox
 - **Установка:**
   1. Соберите проект или скачайте готовый `WreckMPExtendedSync.dll`.
