@@ -468,7 +468,7 @@ namespace WreckMPExtendedSync
 								}
 							}
 						}
-						else if (lastOrderItems.Count > 0 && postOrderBuyWasActive && !postOrderPaidSent)
+						else if (lastOrderItems.Count > 0 && !postOrderPaidSent)
 						{
 							foreach (string item in lastOrderItems)
 							{
@@ -1639,16 +1639,19 @@ namespace WreckMPExtendedSync
 		public void CleanupAllPostOrderBuyObjects()
 		{
 			postOrderBuyWasActive = false;
+			int count = 0;
 			try
 			{
+				HashSet<int> processed = new HashSet<int>();
 				GameObject store = GameObject.Find("STORE");
 				if (store != null)
 				{
 					Transform[] allTr = store.GetComponentsInChildren<Transform>(true);
 					for (int k = 0; k < allTr.Length; k++)
 					{
-						if (allTr[k] != null && IsReceiptObject(allTr[k].name))
+						if (allTr[k] != null && IsReceiptObject(allTr[k].name) && processed.Add(allTr[k].gameObject.GetInstanceID()))
 						{
+							count++;
 							DisablePostOrderBuyObject(allTr[k].gameObject);
 						}
 					}
@@ -1660,12 +1663,14 @@ namespace WreckMPExtendedSync
 					for (int i = 0; i < sceneObjects.Length; i++)
 					{
 						GameObject obj = sceneObjects[i];
-						if (obj != null && obj.hideFlags == HideFlags.None && IsReceiptObject(obj.name))
+						if (obj != null && obj.hideFlags == HideFlags.None && IsReceiptObject(obj.name) && processed.Add(obj.GetInstanceID()))
 						{
+							count++;
 							DisablePostOrderBuyObject(obj);
 						}
 					}
 				}
+				FileLogger.WriteLine("cleanup: PostOrderBuy objects found: " + count, "INFO");
 			}
 			catch (Exception ex)
 			{
@@ -2242,6 +2247,7 @@ namespace WreckMPExtendedSync
 			try
 			{
 				HandleCatalogPartUnbox(cleanPartName, itemIndex, pos, rot);
+				DestroySpectatorBox(pos, cleanPartName, itemIndex);
 			}
 			finally
 			{
@@ -2398,6 +2404,39 @@ namespace WreckMPExtendedSync
 			HandleCatalogPartUnbox(cleanPartName, 0, pos, rot);
 		}
 
+		private void DestroySpectatorBox(Vector3 unboxPos, string cleanPart, int itemIndex)
+		{
+			GameObject[] all = UnityEngine.Object.FindObjectsOfType<GameObject>();
+			for (int i = 0; i < all.Length; i++)
+			{
+				GameObject go = all[i];
+				if (go == null) continue;
+				if (!IsParcelBox(go.name) && (go.transform.root == null || !IsParcelBox(go.transform.root.name))) continue;
+				if (Vector3.Distance(go.transform.position, unboxPos) > 3f) continue; // та же коробка
+				
+				// Пометить как обработанную, чтобы watcher зрителя не счёл это своим открытием
+				ParcelUnboxTracker trk = go.GetComponent<ParcelUnboxTracker>();
+				if (trk != null)
+				{
+					trk.WasTriggered = true; // ключевое: глушим его собственный unbox-broadcast
+				}
+				
+				// Дёрнуть FSM, если игра умеет сама "открыть" — иначе просто скрыть
+				PlayMakerFSM fsm = go.GetComponentInChildren<PlayMakerFSM>();
+				if (fsm != null)
+				{
+					suppressedParcels.Add(go.GetInstanceID()); // защита от echo
+					fsm.SendEvent("OPEN");
+				}
+				else
+				{
+					go.SetActive(false);
+				}
+				ExtendedSyncDebugHUD.Log("[PARTS] Коробка зрителя закрыта по сетевому unbox: " + go.name);
+				break; // одну коробку за раз
+			}
+		}
+
 		public void BroadcastParcelUnbox(Vector3 pos, string boxName = "", string partName = "", int orderIndex = -1)
 		{
 			string cleanPart = MatchAmisCatalogPart(!string.IsNullOrEmpty(partName) ? partName : ExtractPartNameFromBox(boxName));
@@ -2413,6 +2452,7 @@ namespace WreckMPExtendedSync
 				string partName = (reader.BaseStream.Position < reader.BaseStream.Length) ? reader.ReadString() : "";
 				string clean = MatchAmisCatalogPart(!string.IsNullOrEmpty(partName) ? partName : ExtractPartNameFromBox(boxName));
 				HandleCatalogPartUnbox(clean, 0, b, Quaternion.identity);
+				DestroySpectatorBox(b, clean, 0);
 			}
 			catch (Exception ex)
 			{
