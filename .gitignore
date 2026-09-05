@@ -1,0 +1,20 @@
+﻿# Build outputs
+bin/
+obj/
+
+# Backups & private notes
+_backup/
+исходники.txt
+last_prompt.txt
+*.zip
+
+# Third-party references
+References/
+
+# Tools & IDE
+.postman/
+postman/
+*.user
+*.suo
+.vs/
+.idea/

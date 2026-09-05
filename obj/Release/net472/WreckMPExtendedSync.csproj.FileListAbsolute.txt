@@ -1,8 +1,0 @@
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPExtendedSync.csproj.AssemblyReference.cache
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPExtendedSync.GeneratedMSBuildEditorConfig.editorconfig
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPExtendedSync.csproj.CoreCompileInputs.cache
-C:\Program Files (x86)\Steam\steamapps\common\My Summer Car\Mods\WreckMPExtendedSync.dll
-C:\Program Files (x86)\Steam\steamapps\common\My Summer Car\Mods\WreckMPExtendedSync.pdb
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPE.27FC8ED8.Up2Date
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPExtendedSync.dll
-C:\tmp\WreckMPExtendedSync\obj\Release\net472\WreckMPExtendedSync.pdb
