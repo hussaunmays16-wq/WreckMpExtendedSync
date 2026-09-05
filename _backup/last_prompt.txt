@@ -1,0 +1,146 @@
+<USER_REQUEST>
+Понял — SAVE тоже не вылечил, флап жив. Тогда обычные причины отпали, и моя приоритезация меняется: вероятность **нашей вины растёт** (30% → ~50%), потому что главный подозреваемый теперь — наш `TransferOrRelinquishOwnership` + `UpdateNetRigidbodyCache`, который вмешивается в кеш владения WreckMP при телепортах и конфликтует с его протоколом.
+
+Прежде чем кидаться фиксить вслепую — **один быстрый тест на 3 минуты**, он делит гипотезы пополам:
+
+## Тест-разделитель (сейчас, с модом)
+
+Сценарий тот же, но **никто ничего не телепортирует через чит-бокс вообще**:
+
+1. Оба заходят, мод включён.
+2. Хост **руками** отгоняет Hayosiko туда, где тестировали.
+3. Садится клиент, катаетесь до появления отмотки.
+
+**Отмотка есть →** мод виноват даже без телепортов (значит, дело в чём-то постоянном: watchdog, Update, подписки) → дам ТЗ на диагностику+фикс.
+**Отмотки нет →** триггер — именно телепорт модом (наш transfer кеша ломает WreckMP-владение) → фикс точечный, уже знаю какой.
+
+Если лень тестить — можно чинить сразу оба подозреваемых разом, они дешёвые. Вот ТЗ:
+
+````markdown
+# ТЗ: WreckMP Extended Sync v3.8.3 — фикс rubberband-флапа владения транспортом
+
+## Контекст
+Проект: C:\tmp\WreckMPExtendedSync\ (.NET 3.5, MSC + WreckMP 0.8.0-dev).
+Текущая версия: 3.8.2. Симптом: клиент едет на машине (владение передано при телепорте
+модом или само), через N минут машину начинает отматывать назад. Протокол WreckMP
+(FAST/DEFAULT/SAVE) не влияет. Два подозреваемых: (1) наш transfer-кеша при телепорте
+конфликтует с внутренним владением WreckMP; (2) у не-владельца кто-то продолжает
+писать cachedPosition в OwnedRigidbody.
+
+## Задача 1: Отладочный монитор владения (главное — диагност)
+
+Файл Sync_Vehicles.cs, класс ExtendedVehiclesSync. Добавить поля и метод:
+
+```csharp
+private float nextOwnershipMonitorTime;
+private GameObject monitoredVehicle;
+
+// В Update() в начало:
+UpdateOwnershipMonitor();
+
+private void UpdateOwnershipMonitor()
+{
+    if (Application.loadedLevelName != "GAME") return;
+    if (Time.time < nextOwnershipMonitorTime) return;
+    nextOwnershipMonitorTime = Time.time + 2f;
+
+    try
+    {
+        // Машина, за рулём которой сидит ЛОКАЛЬНЫЙ игрок
+        var curVeh = PlayMakerGlobals.Instance?.Variables?.FindFsmString("PlayerCurrentVehicle");
+        string vehName = (curVeh != null) ? curVeh.Value : "";
+        if (string.IsNullOrEmpty(vehName)) return;
+
+        if (monitoredVehicle == null || monitoredVehicle.name.IndexOf(vehName, StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            monitoredVehicle = FindVehicle(vehName);
+        }
+        if (monitoredVehicle == null) return;
+
+        Rigidbody rb = monitoredVehicle.GetComponent<Rigidbody>();
+        if (rb == null) return;
+
+        int hash = NetRigidbodyManager.GetRigidbodyHash(rb);
+        if (hash == 0) { FileLogger.WriteLine("[OWN-MON] " + vehName + ": NOT REGISTERED in NetRigidbodyManager", "INFO"); return; }
+        OwnedRigidbody orb = NetRigidbodyManager.GetOwnedRigidbody(hash);
+        if (orb == null) { FileLogger.WriteLine("[OWN-MON] " + vehName + ": no OwnedRigidbody", "INFO"); return; }
+
+        ulong owner = 0UL;
+        try { owner = (ulong)(orbOwnerPropOrFieldGetValue(orb) ?? 0UL); } catch {}
+
+        string side = WreckMPGlobals.IsHost ? "HOST" : "CLIENT";
+        FileLogger.WriteLine("[OWN-MON] " + vehName + " | " + side + " | owner=" + owner +
+            " | me=" + WreckMPGlobals.UserID +
+            " | pos=" + rb.transform.position.ToString("F1") +
+            " | kin=" + rb.isKinematic, "INFO");
+    }
+    catch { }
+}
+```
+
+`orbOwnerPropOrFieldGetValue` — реализовать через уже существующие orbOwnerField/orbOwnerProp
+(см. BetterCheatBox_Core.cs, блок рефлексии возле RelinquishSingleRigidbody) — вынести их
+в internal-static хелпер `public static ulong GetOwnedRigidbodyOwner(OwnedRigidbody orb)`
+в BetterCheatBoxSyncManager и дергать оттуда.
+
+## Задача 2: Не трогать кеш владения на приёмной стороне (главный подозреваемый)
+
+Файл BetterCheatBox_Core.cs, метод `UpdateNetRigidbodyCache(GameObject go, Vector3 pos, Quaternion rot)`:
+в начало метода добавить guard — метод полностью отключается для НЕ-владельца:
+
+```csharp
+public static void UpdateNetRigidbodyCache(GameObject go, Vector3 pos, Quaternion rot)
+{
+    if (go == null) return;
+    // ФИКС rubberband: запись cachedPosition/cachedEulerAngles на стороне, НЕ владеющей
+    // rigidbody, "заряжает" точку отката для WreckMP — при возврате владения машину
+    // телепортирует назад. Пишем кеш ТОЛЬКО если локальный игрок — владелец.
+    try
+    {
+        Rigidbody ownRb = go.GetComponent<Rigidbody>();
+        if (ownRb != null && !IsLocalOwnerOf(ownRb))
+        {
+            return; // не владелец — не трогаем внутренний кеш WreckMP
+        }
+    }
+    catch { }
+    // ... остальной существующий код без изменений
+}
+```
+
+`IsLocalOwnerOf(Rigidbody rb)` — новый хелпер в BetterCheatBoxSyncManager: находит orb по
+hash/списку (код как в RelinquishSingleRigidbody) и сравнивает владельца с
+WreckMPGlobals.UserID. Владелец не найден/не резолвится → считать владельцем (true),
+чтобы путь телепорта инициатора (он только что забрал владение) не сломался.
+
+## Задача 3: телепорт-инициатор подтверждает владение ДО записи кеша
+
+В `ApplyVehicleTeleportLocal` (Sync_Vehicles.cs) и `BroadcastTeleportObject` /
+`BroadcastSpawnObject` (BetterCheatBox_Core.cs): там, где сейчас вызывается
+`UpdateNetRigidbodyCache` — убедиться, что ПЕРЕД ним вызван `ResetRigidbodyPhysicsAndClaim`
+(или Transfer... на хосте) — т.е. сначала ownership, потом кеш. Порядок уже верный в
+большинстве мест: проверить и В ЛОГЕ подтвердить, что при телепорте пишется
+`[OWN-MON] ... owner=<мой id>` на инициаторе и `owner=<его id>` на принимающем.
+
+## Задача 4: версия, сборка, деплой, самопроверка
+
+- Version => 3.8.3, три места.
+- Сборка 0/0, деплой оба инстанса, SHA-256.
+- Select-String проверки: 'UpdateOwnershipMonitor' (объявление+Update+метод),
+  'IsLocalOwnerOf' (объявление+использование), 'GetOwnedRigidbodyOwner' (объявление+использование),
+  guard-комментарий "ФИКС rubberband" в UpdateNetRigidbodyCache.
+
+## Runtime-проверка после релиза (для человека)
+1. Кататься на машине 10+ минут на DEFAULT протоколе.
+2. При появлении отмотки — оба лога: строки [OWN-MON] покажут, чей owner и была ли
+   смена владельца прямо перед отмоткой (сверка по таймстампам).
+3. Если owner не менялся, а отмотка есть — прислать 20 строк [OWN-MON] до/после.
+````
+
+Что даст монитор: **таймстамп флапа в логе** — увидим, менялся ли `owner=` прямо перед отмоткой и у кого лежала неверная позиция. Если после задачи 2 отмотка исчезнет — виновник был кеш. Если останется — монитор покажет, на чьей стороне WreckMP переворачивает владение, и следующий шаг будет точным (опция ownership-keeper или «не трогать владение вовсе»).
+
+Прогони ТЗ, покатайся 10 минут на DEFAULT (не SAVE — на нём флап может маскироваться), и пришли обе стороны лога с `[OWN-MON]`.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-05T22:54:50+04:00.
+</ADDITIONAL_METADATA>

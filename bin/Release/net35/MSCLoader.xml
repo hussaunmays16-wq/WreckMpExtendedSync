@@ -1,0 +1,2298 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MSCLoader</name>
+    </assembly>
+    <members>
+        <member name="T:MSCLoader.Playlists">
+            <summary>
+            Parse playlists files
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Playlists.plsPlaylist(System.String)">
+            <summary>
+            Parse *.pls playlist file and return List of paths
+            </summary>
+            <param name="path">Path to *.pls file</param>
+            <returns>List of paths to files/urls</returns>
+        </member>
+        <member name="M:MSCLoader.Playlists.plsPlaylist(System.IO.Stream)">
+            <summary>
+            Parse *.pls playlist file and return List of paths
+            </summary>
+            <param name="stream">File stream</param>
+            <returns>List of paths to files/urls</returns>
+        </member>
+        <member name="M:MSCLoader.Playlists.m3uPlaylist(System.String)">
+            <summary>
+            Parse *.m3u and *.m3u8 playlist files and return List of paths
+            </summary>
+            <param name="path">Path to .m3u or *.m3u8 file</param>
+            <returns>List of paths to files/urls</returns>
+        </member>
+        <member name="M:MSCLoader.Playlists.m3uPlaylist(System.IO.Stream)">
+            <summary>
+            Parse *.m3u and *.m3u8 playlist files and return List of paths
+            </summary>
+            <param name="stream">File stream</param>
+            <returns>List of paths to files/urls</returns>
+        </member>
+        <member name="T:MSCLoader.ConsoleCommand">
+            <summary>
+            Base class for console commands
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ConsoleCommand.Name">
+            <summary>
+            The name of the ConsoleCommand (What the user will have to type in console to trigger the command). Cannot contain spaces!
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ConsoleCommand.Help">
+            <summary>
+            The help message that will be displayed for the command when the user types "help"
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ConsoleCommand.ShowInHelp">
+            <summary>
+            Show this command in help screen.
+            (Default true).
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ConsoleCommand.Alias">
+            <summary>
+            Alternate command name that does the same thing. Cannot contain spaces!
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ConsoleCommand.Run(System.String[])">
+            <summary>
+            The function that will get called when the command is ran.
+            </summary>
+            <param name="args">The arguments the user passed after the command.</param>
+        </member>
+        <member name="M:MSCLoader.ConsoleCommand.Add(MSCLoader.ConsoleCommand)">
+            <summary>
+            Adds a console command.
+            </summary>
+            <param name="cmd">The instance of the command to add.</param>
+        </member>
+        <member name="T:MSCLoader.UnifiedRaycast">
+            <summary>
+            Unified Raycast, use this to get interaction raycast results
+            </summary>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetHit(UnityEngine.Collider)">
+            <summary>
+            Returns true if provided collider is hit as first element on all layers
+            </summary>
+            <param name="collider">Your collider</param>
+            <returns>true if hit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetHitInteraction(UnityEngine.Collider)">
+            <summary>
+            Returns true if collider is hit only on "Tools", "HingedObjects", "Dashboard" layers 
+            </summary>
+            <param name="collider">Your collider</param>
+            <returns>true if hit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetHitAll(UnityEngine.Collider)">
+            <summary>
+            Returns true if provided collider is hit (checks against all colliders that raycast hits)
+            </summary>
+            <param name="collider">Your collider</param>
+            <returns>true if hit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetHitName">
+            <summary>
+            Returns name of the first raycast hit
+            </summary>
+            <returns>name of the first raycast hit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetHitNames">
+            <summary>
+            Returns names of all raycast hits
+            </summary>
+            <returns>names of all raycast hits</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetRaycastHit">
+            <summary>
+            Returns RaycastHit so you can parse it yourself
+            </summary>
+            <returns>RaycastHit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetRaycastHitInteraction">
+            <summary>
+            Returns RaycastHit from interaction layers so you can parse it yourself
+            </summary>
+            <returns>RaycastHit</returns>
+        </member>
+        <member name="M:MSCLoader.UnifiedRaycast.GetRaycastHits">
+            <summary>
+            Returns RaycastHit[] so you can parse it yourself
+            </summary>
+            <returns>RaycastHit[]</returns>
+        </member>
+        <member name="T:MSCLoader.Keybind">
+            <summary>
+            Add easily rebindable keybinds.
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Keybind.Add(System.String,System.String,UnityEngine.KeyCode)">
+            <summary>
+            Add a keybind.
+            </summary>
+            <param name="id">The ID of the Keybind (Used only once in your mod).</param>
+            <param name="name">The name of the Keybind that will be displayed.</param>
+            <param name="key">The KeyCode the user will press.</param>
+            <returns>SettingsKeybind</returns>
+        </member>
+        <member name="M:MSCLoader.Keybind.Add(System.String,System.String,UnityEngine.KeyCode,UnityEngine.KeyCode)">
+            <summary>
+            Add a keybind with modifier.
+            </summary>
+            <param name="id">The ID of the Keybind (Used only once in your mod).</param>
+            <param name="name">The name of the Keybind that will be displayed.</param>
+            <param name="key">The KeyCode the user will press.</param>
+            <param name="modifier">The modifier KeyCode the user will have to press.</param>
+            <returns>SettingsKeybind</returns>
+        </member>
+        <member name="M:MSCLoader.Keybind.AddHeader(System.String,System.Boolean)">
+            <summary>
+            Add Header, that can be used to group keybinds.
+            </summary>
+            <param name="HeaderTitle">Title of your header</param>
+            <param name="collapsedByDefault">Collapsed by default</param>
+            <returns>KeybindHeader</returns>
+        </member>
+        <member name="M:MSCLoader.Keybind.AddHeader(System.String,UnityEngine.Color,UnityEngine.Color,System.Boolean)">
+            <summary>
+            Add Header, that can be used to group keybinds..
+            </summary>
+            <param name="HeaderTitle">Title of your header</param>
+            <param name="backgroundColor">Background color of header</param>
+            <param name="textColor">Text Color of header</param>
+            <param name="collapsedByDefault">Collapsed by default</param>
+            <returns>KeybindHeader</returns>
+        </member>
+        <member name="T:MSCLoader.LoadAssets">
+            <summary>
+            Class for Loading custom assets from Assets folder
+            </summary>
+        </member>
+        <member name="M:MSCLoader.LoadAssets.MakeGameObjectPickable(UnityEngine.GameObject)">
+            <summary>
+            Make GameObject Pickable, make sure your GameObject has Rigidbody and colliders attached.
+            </summary>
+            <param name="go">Your GameObject</param>
+        </member>
+        <member name="M:MSCLoader.LoadAssets.LoadTexture(MSCLoader.Mod,System.String,System.Boolean)">
+            <summary>
+            Load texture (*.dds, *.jpg, *.png, *.tga) from mod assets folder
+            </summary>
+            <param name="mod">Mod instance.</param>
+            <param name="fileName">File name to load from assets folder (for example "texture.dds")</param>
+            <param name="normalMap">Normal mapping (default false)</param>
+            <returns>Returns unity Texture2D</returns>
+        </member>
+        <member name="M:MSCLoader.LoadAssets.LoadBundle(MSCLoader.Mod,System.String)">
+            <summary>
+            Loads assetbundle from Assets folder
+            </summary>
+            <param name="mod">Mod instance.</param>
+            <param name="bundleName">File name to load (for example "something.unity3d")</param>
+            <returns>Unity AssetBundle</returns>
+        </member>
+        <member name="M:MSCLoader.LoadAssets.LoadBundle(System.Byte[])">
+            <summary>
+            Loads assetbundle from Resources
+            </summary>
+            <param name="assetBundleFromResources">Resource path</param>
+            <returns>Unity AssetBundle</returns>
+        </member>
+        <member name="M:MSCLoader.LoadAssets.LoadBundle(System.String)">
+            <summary>
+            Loads assetbundle from Embedded Resources
+            </summary>
+            <param name="assetBundleEmbeddedResources">Resource path namespace.folder.file.extension</param>
+            <returns>Unity AssetBundle</returns>
+        </member>
+        <member name="T:MSCLoader.Mod">
+            <summary>
+            The base mod class, all mods should have this class.
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.ID">
+            <summary>
+            The ID for your mod (This should be unique).
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.Name">
+            <summary>
+            The name of mod that will be displayed in settings.
+            (if not set, will be same as ID)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.Version">
+            <summary>
+            The current version of the mod.
+            (prefered standard version format: 2, 3 or 4 digits)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.Author">
+            <summary>
+            Author of the mod
+            (Enter your nickname in this variable)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.Icon">
+            <summary>
+            Mod Icon from Resources or Embedded Resources.
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.Description">
+            <summary>
+            Short Description of your mod
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.SupportedGames">
+            <summary>
+            List of games supported by this mod
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Mod.ModSetup">
+            <summary>
+            Setup your mod. IMPORTANT! Only SetupFunction() is allowed here
+            Please disclose AI generated code in Description and AssemblyInfo inside AssemblyTrademark field
+            </summary>
+        </member>
+        <member name="P:MSCLoader.Mod.isDisabled">
+            <summary>
+            true if mod is disabled
+            </summary>
+        </member>
+        <member name="T:MSCLoader.Mod.Setup">
+            <summary>
+            Type of Function to setup
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnNewGame">
+            <summary>
+            OnNewGame - Called once when new game (not continue old save) is started
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnMenuLoad">
+            <summary>
+            OnMenuLoad - Setup function that is executed once in MainMenu
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.PreLoad">
+            <summary>
+            PreLoad - Phase 1 of mod loading (executed once after GAME scene is loaded)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnLoad">
+            <summary>
+            OnLoad - Phase 2 of mod loading (executed once GAME scene is fully loaded)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.PostLoad">
+            <summary>
+            PostLoad - Phase 3 of mod loading (executed once after all mods finished with Phase 2)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnSave">
+            <summary>
+            OnSave - Executed once after game is being saved
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnGUI">
+            <summary>
+            OnGUI - Works same way as unity OnGUI
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.Update">
+            <summary>
+            Update - Works same way as unity Update
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.FixedUpdate">
+            <summary>
+            FixedUpdate - Works same way as unity FixedUpdate
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnModEnabled">
+            <summary>
+            OnModEnabled - Called once when mod has been enabled in settings
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.OnModDisabled">
+            <summary>
+            OnModDisabled - Called once when mod has been disabled in settings
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.ModSettingsLoaded">
+            <summary>
+            ModSettingsLoaded - Called after saved settings have been loaded from file or after "Reset Settings to default" is pressed
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Mod.Setup.ModSettings">
+            <summary>
+            ModSettings - All settings and Keybinds should be created here
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Mod.SetupFunction(MSCLoader.Mod.Setup,System.Action)">
+            <summary>
+            Setup selected function for your mod
+            </summary>
+            <param name="functionType">Function type</param>
+            <param name="function">Your own function to execute that type</param>
+        </member>
+        <member name="M:MSCLoader.Mod.SetupFunction(MSCLoader.Mod.Setup,System.Action,System.String)">
+            <summary>
+            Setup selected function for your mod
+            </summary>
+            <param name="functionType">Function type</param>
+            <param name="function">Your own function to execute that type</param>
+            <param name="customStatusText">Custom status text on loading progress bar (Only in OnNewGame, PreLoad, OnLoad, PostLoad)</param>
+        </member>
+        <member name="T:MSCLoader.ModAudio">
+            <summary>
+            Audio library (play local ".ogg", ".ogv", ".mp3", ".flac", ".wav", ".aiff" files)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudio.audioSource">
+            <summary>
+            Your AudioSource goes here
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudio.allowedExtensions">
+            <summary>
+            Allowed audio extensions (for easy string comparation)
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModAudio.LoadAudioFromFile(System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Load audio from file
+            </summary>
+            <param name="path">Full path to audio file</param>
+            <param name="doStream">Stream from HDD instead of loading to memory</param>
+            <param name="background">Load file in background</param>
+        </member>
+        <member name="M:MSCLoader.ModAudio.LoadAudioClipFromFile(System.String,System.Boolean)">
+            <summary>
+            Load audio from file and return as AudioClip (supported formats: *.mp3, *.ogg, *.wav, *.aiff, *.flac)
+            </summary>
+            <param name="path">Path to audio file</param>
+            <param name="doStream">Stream from HDD instead of loading to memory</param>
+            <returns>AudioClip</returns>
+        </member>
+        <member name="M:MSCLoader.ModAudio.Time">
+            <summary>
+            Get current time position of audio file
+            </summary>
+            <returns>Time in TimeSpan format</returns>
+        </member>
+        <member name="M:MSCLoader.ModAudio.TotalTime">
+            <summary>
+            Get total time of audio file
+            </summary>
+            <returns>Time in TimeSpan format</returns>
+        </member>
+        <member name="M:MSCLoader.ModAudio.Play(System.Single,System.Single)">
+            <summary>
+            Play loaded audio file from specifed time.
+            </summary>
+            <param name="time">time to start</param>
+            <param name="delay">optional delay</param>
+        </member>
+        <member name="M:MSCLoader.ModAudio.Play">
+            <summary>
+            Play loaded audio file
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModAudio.Stop">
+            <summary>
+            Stop playing audio file
+            </summary>
+        </member>
+        <member name="T:MSCLoader.ModAudioStream">
+            <summary>
+            Audio library (Play online "audio/mpeg" streams)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudioStream.audioSource">
+            <summary>
+            Your AudioSource goes here
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudioStream.songInfo">
+            <summary>
+            Song info from metadata (if available)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudioStream.streamTitle">
+            <summary>
+            Stream title (if available)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudioStream.bitrateInfo">
+            <summary>
+            Bitrate info (if available)
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModAudioStream.showDebug">
+            <summary>
+            Show debug info
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModAudioStream.PlayStream(System.String)">
+            <summary>
+            Plays the stream
+            </summary>
+            <param name="streamURL">stream url</param>
+        </member>
+        <member name="M:MSCLoader.ModAudioStream.StopStream">
+            <summary>
+            Stops the stream
+            </summary>
+        </member>
+        <member name="T:MSCLoader.ModConsole">
+            <summary>
+            MSCLoader console related functions.
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModConsole.ID">
+            <exclude />
+        </member>
+        <member name="P:MSCLoader.ModConsole.Name">
+            <exclude />
+        </member>
+        <member name="P:MSCLoader.ModConsole.Version">
+            <exclude />
+        </member>
+        <member name="P:MSCLoader.ModConsole.Author">
+            <exclude />
+        </member>
+        <member name="M:MSCLoader.ModConsole.ModSetup">
+            <exclude />
+        </member>
+        <member name="M:MSCLoader.ModConsole.Print(System.String)">
+            <summary>
+            Print a message to console.
+            </summary>
+            <param name="str">Text to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Print(System.Object)">
+            <summary>
+            Prints anything to console.
+            </summary>
+            <param name="obj">Text or object to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Error(System.String)">
+            <summary>
+            Print an error to the console.
+            </summary>
+            <param name="str">Text to print to error log.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Warning(System.String)">
+            <summary>
+            Print an warning to the console.
+            </summary>
+            <param name="str">Text to print to error log.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Log(System.String)">
+            <summary>
+            Same as ModConsole.Print(string);
+            </summary>
+            <param name="text">Text to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Log(System.Object)">
+            <summary>
+            Same as ModConsole.Print(obj);
+            </summary>
+            <param name="obj">object to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.LogError(System.String)">
+            <summary>
+            Same as ModConsole.Error(string);
+            </summary>
+            <param name="text">Error to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.LogWarning(System.String)">
+            <summary>
+            Same as ModConsole.Warning(string);
+            </summary>
+            <param name="text">Warning to print to console.</param>
+        </member>
+        <member name="M:MSCLoader.ModConsole.Log(System.Collections.IList,System.Boolean)">
+            <summary>
+            Logs a list (and optionally its elements) to the ModConsole and output_log.txt
+            </summary>
+            <param name="list">List to print.</param>
+            <param name="printAllElements">(Optional) Should it log all elements of the list/array or should it only log the list/array itself. (default: true)</param>
+        </member>
+        <member name="T:MSCLoader.ModLoader">
+            <summary>
+            This is main Mod Loader class.
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModLoader.LoadedMods">
+            <summary>
+            A list of all loaded mods.
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModLoader.MSCLoader_Ver">
+            <summary>
+            The current version of the ModLoader.
+            </summary>
+        </member>
+        <member name="F:MSCLoader.ModLoader.experimental">
+            <summary>
+            Is this version of ModLoader experimental (this is NOT game experimental branch)
+            </summary>
+            <exclude />  
+        </member>
+        <member name="M:MSCLoader.ModLoader.MainMenuPath">
+            <summary>
+            Toggle main menu path via settings
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModLoader.CurrentScene">
+            <summary>
+            Current scene
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModLoader.CurrentGame">
+            <summary>
+            Get Current Game
+            </summary>
+            <returns>Game enum</returns>
+        </member>
+        <member name="P:MSCLoader.ModLoader.IsWineOrProton">
+            <summary>
+            Is running on Wine or Proton
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModLoader.IsLinux">
+            <summary>
+            Is running native Linux executable
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModLoader.CheckSteam">
+            <summary>
+            Check if steam is present
+            </summary>
+            <returns>Valid steam detected.</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.CheckIfExperimental">
+            <summary>
+            Check if steam release is from experimental branch
+            </summary>
+            <returns>Experimental detected.</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.GetModVersionByID(System.String)">
+            <summary>
+            Get version of mod by modID (returns 0.0.0.0 if not found)
+            </summary>
+            <param name="modID">Specified modID</param>
+            <returns>Version number as string</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.GetReferenceVersionByID(System.String)">
+            <summary>
+            Get version of reference by AssemblyID (returns 0.0.0.0 if not found)
+            </summary>
+            <param name="AssemblyID">AssemblyID of reference</param>
+            <returns>Version number as string</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.IsReferencePresent(System.String)">
+            <summary>
+            Check if Reference of specified AssemblyID is present
+            </summary>
+            <param name="AssemblyID">AssemblyID of reference to check (Case sensitive)</param>
+            <returns>true if AssemblyID is present</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.IsModPresent(System.String)">
+            <summary>
+            Check if other ModID is present and enabled
+            </summary>
+            <param name="ModID">Mod ID of other mod to check (Case sensitive)</param>
+            <returns>true if mod ID is present</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.IsModPresent(System.String,System.Boolean)">
+            <summary>
+            Check if other ModID is present
+            </summary>
+            <param name="ModID">Mod ID of other mod to check (Case sensitive)</param>
+            <param name="includeDisabled">Include disabled mods</param>
+            <returns>true if mod ID is present</returns>
+        </member>
+        <member name="M:MSCLoader.ModLoader.GetModSettingsFolder(MSCLoader.Mod)">
+            <summary>
+            Mod settings folder, use this if you want save something. 
+            </summary>
+            <returns>Path to your mod settings folder</returns>
+            <param name="mod">Your mod Class.</param>
+        </member>
+        <member name="M:MSCLoader.ModLoader.GetModAssetsFolder(MSCLoader.Mod)">
+            <summary>
+            Mod assets folder, use this if you want load custom content. 
+            </summary>
+            <returns>Path to your mod assets folder</returns>
+            <param name="mod">Your mod Class.</param>
+        </member>
+        <member name="T:MSCLoader.CurrentScene">
+            <summary>
+            List of possible scenes
+            </summary>
+        </member>
+        <member name="F:MSCLoader.CurrentScene.MainMenu">
+            <summary>
+            Main Menu
+            </summary>
+        </member>
+        <member name="F:MSCLoader.CurrentScene.Game">
+            <summary>
+            Game Scene
+            </summary>
+        </member>
+        <member name="F:MSCLoader.CurrentScene.NewGameIntro">
+            <summary>
+            Intro for new game
+            </summary>
+        </member>
+        <member name="F:MSCLoader.CurrentScene.Ending">
+            <summary>
+            End game scene
+            </summary>
+        </member>
+        <member name="T:MSCLoader.Game">
+            <summary>
+            List of supported games
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Game.MySummerCar">
+            <summary>
+            Designed for My Summer Car
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Game.MyWinterCar">
+            <summary>
+            Designed for My Winter Car
+            </summary>
+        </member>
+        <member name="F:MSCLoader.Game.MySummerCar_And_MyWinterCar">
+            <summary>
+            Designed for both My Summer Car and My Winter Car
+            </summary>
+        </member>
+        <member name="M:MSCLoader.DropDownList.RebuildPanel">
+            <summary>
+            Rebuilds the contents of the panel in response to items being added.
+            </summary>
+        </member>
+        <member name="M:MSCLoader.DropDownList.ToggleDropdownPanel(System.Boolean)">
+            <summary>
+            Toggle the drop down list
+            </summary>
+            <param name="directClick"> whether an item was directly clicked on</param>
+        </member>
+        <member name="P:MSCLoader.DropDownListItem.Caption">
+            <summary>
+            Caption of the Item
+            </summary>
+        </member>
+        <member name="P:MSCLoader.DropDownListItem.Image">
+            <summary>
+            Image component of the Item
+            </summary>
+        </member>
+        <member name="P:MSCLoader.DropDownListItem.IsDisabled">
+            <summary>
+            Is the Item currently enabled?
+            </summary>
+        </member>
+        <member name="P:MSCLoader.DropDownListItem.ID">
+            <summary>
+            ID exists so that an item can have a caption and a value like in traditional windows forms. Ie. an item may be a student's name, and the ID can be the student's ID number
+            </summary>
+        </member>
+        <member name="M:MSCLoader.DropDownListItem.#ctor(System.String,System.String,UnityEngine.Sprite,System.Boolean,System.Action)">
+            <summary>
+            Constructor for Drop Down List panelItems
+            </summary>
+            <param name="caption">Caption for the item </param>
+            <param name="inId">ID of the item </param>
+            <param name="image"></param>
+            <param name="disabled">Should the item start disabled</param>
+            <param name="onSelect">Action to be called when this item is selected</param>
+        </member>
+        <member name="T:MSCLoader.ModKeybind">
+            <summary>
+            Mod Setting base class
+            </summary>
+        </member>
+        <member name="T:MSCLoader.KeybindHeader">
+            <summary>
+            Keybind Header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.Collapse">
+            <summary>
+            Collapse this header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.Collapse(System.Boolean)">
+            <summary>
+            Collapse this header without animation
+            </summary>
+            <param name="skipAnimation">true = skip collapsing animation</param>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.Expand">
+            <summary>
+            Expand this Header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.Expand(System.Boolean)">
+            <summary>
+            Expand this Header without animation
+            </summary>
+            <param name="skipAnimation">true = skip expanding animation</param>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.SetBackgroundColor(UnityEngine.Color)">
+            <summary>
+            Change title background color
+            </summary>
+            <param name="color">Color value</param>
+        </member>
+        <member name="M:MSCLoader.KeybindHeader.SetTextColor(UnityEngine.Color)">
+            <summary>
+            Change title text.
+            </summary>
+            <param name="color">Color value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsKeybind">
+            <summary>
+            Keybind
+            </summary>
+        </member>
+        <member name="P:MSCLoader.SettingsKeybind.GetKeyValue">
+            <summary>
+            Get the current set key for keybind as KeyCode 
+            (do not use this value for input checking)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.SettingsKeybind.GetModifierValue">
+            <summary>
+            Get the current set modifier for keybind as KeyCode (if no modifier, KeyCode.None will be returned)
+            (do not use this value for input checking)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.SettingsKeybind.GetKeybindValue">
+            <summary>
+            Get the current keybind combination as string (if no modifier, only key will be displayed)
+            (do not parse this value for input checking)
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsKeybind.GetKeybind">
+            <summary>
+            Check if keybind is being hold down. (Same behaviour as unity GetKey)
+            </summary>
+            <returns>true, if the keybind is being hold down.</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsKeybind.GetKeybindDown">
+            <summary>
+            Check if the keybind was just pressed once. (Same behaviour as unity GetKeyDown)
+            </summary>
+            <returns>true, Check if the keybind was just pressed.</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsKeybind.GetKeybindUp">
+            <summary>
+            Check if the keybind was just released. (Same behaviour as unity GetKeyUp)
+            </summary>
+            <returns>true, Check if the keybind was just released.</returns>
+        </member>
+        <member name="T:MSCLoader.ModSetting">
+            <summary>
+            Mod Setting base class
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModSetting.SetVisibility(System.Boolean)">
+            <summary>
+            Set visibility of selected settings element
+            </summary>
+            <param name="value">true/false</param>
+        </member>
+        <member name="M:MSCLoader.ModSetting.DontReturnValue">
+            <summary>
+            ONLY FOR POPUP SETTING WINDOW, marks this setting to not return value onnce popup form is submitted
+            </summary>
+        </member>
+        <member name="T:MSCLoader.SettingsCheckBox">
+            <summary>
+            Settings checkbox
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsCheckBox.GetValue">
+            <summary>
+            Get checkbox value
+            </summary>
+            <returns>true/false</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsCheckBox.SetValue(System.Boolean)">
+            <summary>
+            Set checkbox value
+            </summary>
+            <param name="value">true/false</param>
+        </member>
+        <member name="T:MSCLoader.SettingsCheckBoxGroup">
+            <summary>
+            CheckBox group (aka radio button)
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsCheckBoxGroup.GetValue">
+            <summary>
+            Get checkbox value
+            </summary>
+            <returns>true/false</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsCheckBoxGroup.SetValue(System.Boolean)">
+            <summary>
+            Set checkbox value
+            </summary>
+            <param name="value">true/false</param>
+        </member>
+        <member name="T:MSCLoader.SettingsSliderInt">
+            <summary>
+            Integer version of Settings Slider
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsSliderInt.GetValue">
+            <summary>
+            Get slider value
+            </summary>
+            <returns>slider value in int</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsSliderInt.SetValue(System.Int32)">
+            <summary>
+            Set value for slider
+            </summary>
+            <param name="value">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsSlider">
+            <summary>
+            Settings Slider
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsSlider.GetValue">
+            <summary>
+            Get slider value
+            </summary>
+            <returns>slider value in float</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsSlider.SetValue(System.Single)">
+            <summary>
+            Set value for slider
+            </summary>
+            <param name="value">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsTextBox">
+            <summary>
+            Settings TextBox
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsTextBox.GetValue">
+            <summary>
+            Get TextBox value
+            </summary>
+            <returns>TextBox string value</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsTextBox.SetValue(System.String)">
+            <summary>
+            Set value for textbox
+            </summary>
+            <param name="value">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsTextArea">
+            <summary>
+            Settings TextArea
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsTextArea.GetValue">
+            <summary>
+            Get TextArea value
+            </summary>
+            <returns>TextArea string value</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsTextArea.SetValue(System.String)">
+            <summary>
+            Set value for TextArea
+            </summary>
+            <param name="value">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsDropDownList">
+            <summary>
+            Settings DropDown List
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsDropDownList.GetSelectedItemIndex">
+            <summary>
+            Get DropDownList selected Item Index (can be accessed from anywhere)
+            </summary>
+            <returns>DropDownList selectedIndex as int</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsDropDownList.GetSelectedItemName">
+            <summary>
+            Get DropDownList selected Item Name (Only possible if settings are open).
+            </summary>
+            <returns>DropDownList selected item name as string</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsDropDownList.SetSelectedItemIndex(System.Int32)">
+            <summary>
+            Set DropDownList selected Item Index
+            </summary>
+            <param name="value">index</param>
+        </member>
+        <member name="T:MSCLoader.SettingsColorPicker">
+            <summary>
+            Settings Color Picker
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsColorPicker.GetValue">
+            <summary>
+            Get Color32 value
+            </summary>
+            <returns>TextBox string value</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsColorPicker.SetValue(UnityEngine.Color32)">
+            <summary>
+            Set Color32 value
+            </summary>
+            <param name="col">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsHeader">
+            <summary>
+            Settings Header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.Collapse">
+            <summary>
+            Collapse this header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.Collapse(System.Boolean)">
+            <summary>
+            Collapse this header without animation
+            </summary>
+            <param name="skipAnimation">true = skip collapsing animation</param>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.Expand">
+            <summary>
+            Expand this Header
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.Expand(System.Boolean)">
+            <summary>
+            Expand this Header without animation
+            </summary>
+            <param name="skipAnimation">true = skip expanding animation</param>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.SetBackgroundColor(UnityEngine.Color)">
+            <summary>
+            Change title background color
+            </summary>
+            <param name="color">color</param>
+        </member>
+        <member name="M:MSCLoader.SettingsHeader.SetTextColor(UnityEngine.Color)">
+            <summary>
+            Change title text.
+            </summary>
+            <param name="color">color</param>
+        </member>
+        <member name="T:MSCLoader.SettingsText">
+            <summary>
+            Settings Text
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SettingsText.GetValue">
+            <summary>
+            Get Text value
+            </summary>
+            <returns>TextBox string value</returns>
+        </member>
+        <member name="M:MSCLoader.SettingsText.SetValue(System.String)">
+            <summary>
+            Set value for Text
+            </summary>
+            <param name="value">value</param>
+        </member>
+        <member name="T:MSCLoader.SettingsButton">
+            <summary>
+            Settings Button 
+            </summary>
+        </member>
+        <member name="T:MSCLoader.SettingsButton.ButtonIcon">
+            <summary>
+            Predefined button icons
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.None">
+            <summary>
+            No icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Custom">
+            <summary>
+            Custom icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.RaceDepartment">
+            <summary>
+            Race Department logo
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.NexusMods">
+            <summary>
+            NexusMods logo
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Github">
+            <summary>
+            Github logo
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.GoBack">
+            <summary>
+            Go Back icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Bug">
+            <summary>
+            Bug icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Website">
+            <summary>
+            Website icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Folder">
+            <summary>
+            Folder icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Download">
+            <summary>
+            Download icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Info">
+            <summary>
+            Info icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Search">
+            <summary>
+            Search icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Settings">
+            <summary>
+            Settings icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Warning">
+            <summary>
+            Warning icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Close">
+            <summary>
+            Close (X) icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Reset">
+            <summary>
+            Reset icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Delete">
+            <summary>
+            Delete (trash) icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Update">
+            <summary>
+            "Update" icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.CloudArrow">
+            <summary>
+            "Upload" icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Add">
+            <summary>
+            "Add" icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.Edit">
+            <summary>
+            "Edit" icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.PayPal">
+            <summary>
+            "PayPal" icon
+            </summary>
+        </member>
+        <member name="F:MSCLoader.SettingsButton.ButtonIcon.KoFi">
+            <summary>
+            "Ko-fi" icon
+            </summary>
+        </member>
+        <member name="T:MSCLoader.SettingsGroupLayout">
+            <summary>
+            Settings Horizontal/Vertical Group
+            </summary>
+        </member>
+        <member name="T:MSCLoader.SettingsResetButton">
+            <summary>
+            Settings Reset Button
+            </summary>
+        </member>
+        <member name="T:MSCLoader.MsgBoxBtn">
+            <summary>
+            MsgBoxBtn class
+            </summary>
+        </member>
+        <member name="T:MSCLoader.ModUI">
+            <summary>
+            UI elements like creating Message Boxes
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModUI.CreateCanvas(System.String,System.Boolean)">
+            <summary>
+            Create Canvas for your UI.
+            </summary>
+            <param name="name">Name for your canvas</param>
+            <param name="dontDestroyOnLoad">Add dont destroy on load flag (optional)</param>
+            <returns>Created canvas as GameObject</returns>
+        </member>
+        <member name="M:MSCLoader.ModUI.CreateMessageBoxBtn(System.String,System.Action,System.Boolean)">
+            <summary>
+            Create Message Box Button for ShowCustomMessage(...);
+            </summary>
+            <param name="ButtonText">Text on the Button</param>
+            <param name="ifClicked">Action if button was clicked (leave null for just closing message box)</param>
+            <param name="noClosing">Don't close MessageBox when action is triggered</param>
+            <returns>MsgBoxBtn</returns>
+        </member>
+        <member name="M:MSCLoader.ModUI.CreateMessageBoxBtn(System.String,System.Action,UnityEngine.Color32,UnityEngine.Color32,System.Boolean)">
+            <summary>
+            Create Message Box Button for ShowCustomMessage(...);
+            </summary>
+            <param name="ButtonText">Text on the Button</param>
+            <param name="ifClicked">Action if button was clicked (leave null for just closing message box)</param>
+            <param name="BackgroundColor">Button background color</param>
+            <param name="TextColor">Text color</param>
+            <param name="noClosing">Don't close MessageBox when action is triggered</param>
+            <returns>MsgBoxBtn</returns>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowMessage(System.String)">
+            <summary>
+            Show Message Box with simple message
+            </summary>
+            <param name="message">Message content</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowMessage(System.String,System.String)">
+            <summary>
+            Show Message Box with simple message
+            </summary>
+            <param name="message">Message content</param>
+            <param name="title">Title of message</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowYesNoMessage(System.String,System.Action)">
+            <summary>
+            Show simple question message, and do something when user click yes.
+            </summary>
+            <param name="message">Message content</param>
+            <param name="ifYes">What to do when user click yes</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowYesNoMessage(System.String,System.String,System.Action)">
+            <summary>
+            Show simple question message, and do something when user click yes.
+            </summary>
+            <param name="message">Message content</param>
+            <param name="title">Title of message</param>
+            <param name="ifYes">What to do when user click yes</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowCustomMessage(System.String,System.String,MSCLoader.MsgBoxBtn[])">
+            <summary>
+            Show Custom message, you can create MessageBox with custom buttons using CreateMessageBoxBtn() first
+            </summary>
+            <param name="message">>Message content</param>
+            <param name="title">Title of message</param>
+            <param name="buttons">Buttons created using CreateMessageBoxBtn()</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.ShowCustomMessage(System.String,System.String,MSCLoader.MsgBoxBtn[],MSCLoader.MsgBoxBtn[])">
+            <summary>
+            Show Custom message, you can create MessageBox with custom buttons using CreateMessageBoxBtn() first
+            </summary>
+            <param name="message">>Message content</param>
+            <param name="title">Title of message</param>
+            <param name="buttons">Buttons created using CreateMessageBoxBtn()</param>
+            <param name="buttons2">A place to add "second row" of buttons.</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.CreatePopupSetting(System.String,System.String)">
+            <summary>
+            Create Popup Setting Window
+            </summary>
+            <param name="title">Window title</param>
+            <param name="submitButtonText">Submit button text</param>
+            <returns>PopupSetting</returns>
+        </member>
+        <member name="M:MSCLoader.ModUI.ParsePopupResponse``1(System.String)">
+            <summary>
+            Parse popup response by deserializing it.
+            </summary>
+            <typeparam name="T">Your class</typeparam>
+            <param name="response">Popup response</param>
+            <returns>Deserialized response</returns>
+        </member>
+        <member name="P:MSCLoader.ModUI.isPopupSettingActive">
+            <summary>
+            Check if Popup Setting Window is active (cannot create new one when active)
+            </summary>
+        </member>
+        <member name="P:MSCLoader.ModUI.isProgressBarActive">
+            <summary>
+            Check if Progress Bar is active (cannot create new one when active)
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ModUI.CreateProgressBar(System.String,System.Int32,System.String)">
+            <summary>
+            Create Custom Progress Bar
+            </summary>
+            <param name="title">Progress bar title</param>
+            <param name="maxValue">Max value of progress bar</param>
+            <param name="status">Progress bar status text</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.UpdateProgressBarSetup(System.String,System.Int32)">
+            <summary>
+            Update Progress Bar Setup info without creating new progress bar (title and max value)
+            </summary>
+            <param name="title">New progress bar title</param>
+            <param name="maxValue">New max value</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.UpdateProgressBar(System.Int32,System.String)">
+            <summary>
+            Update Progress Bar values
+            </summary>
+            <param name="progress">Progress bar current value</param>
+            <param name="status">Progress bar current status text</param>
+        </member>
+        <member name="M:MSCLoader.ModUI.CloseProgressBar">
+            <summary>
+            Close Progress Bar after you are done
+            </summary>
+        </member>
+        <member name="T:MSCLoader.PopupSetting">
+            <summary>
+            Popup Setting Window
+            </summary>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.ShowPopup(System.Action{System.String},System.Boolean)">
+            <summary>
+            Show popup window
+            </summary>
+            <param name="OnSubmit">This will be called once confirm button is pressed to submit result</param>
+            <param name="dontCloseOnConfirm">Don't close popup window on confirm</param>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.ClosePopup">
+            <summary>
+            Close popup manually if you used dontCloseOnConfirm
+            </summary>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.CreateGroup(System.Boolean,System.Boolean)">
+            <summary>
+            Create Settings Group, you can group settings to easily toggle visibility of multiple elements or create horizontal layout group.
+            </summary>
+            <param name="isHorizontal">Create Horizontal Layout Group (default=false)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsGroupLayout</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.EndGroup">
+            <summary>
+            End and close previously created group
+            </summary>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddText(System.String,System.Boolean)">
+            <summary>
+            Add just a text (doesn't return anything on confirm)
+            </summary>
+            <param name="text">Just a text (supports unity rich text)</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsText</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddText(System.String,UnityEngine.TextAlignment,System.Boolean)">
+            <summary>
+            Add just a text (doesn't return anything on confirm)
+            </summary>
+            <param name="text">Just a text (supports unity rich text)</param>
+            <param name="textAlignment">Text alignment (Left, Center, Right)</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsText</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddButton(System.String,System.Action,MSCLoader.SettingsButton.ButtonIcon,System.Boolean)">
+            <summary>
+            Add button to popup menu (doesn't return anything on confirm)
+            </summary>
+            <param name="name">Button name</param>
+            <param name="onClick">Do something when button is clicked</param>
+            <param name="predefinedIcon">Add optional icon</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddCheckBox(System.String,System.String,System.Boolean,System.Action,System.Boolean)">
+            <summary>
+            Add checkbox to popup menu (bool value returns on confirm)
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="onValueChanged">Do something when value is changed</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsCheckBox</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddSlider(System.String,System.String,System.Int32,System.Int32,System.Int32,System.String[],System.Action,System.Boolean)">
+            <summary>
+            Add Integer Slider to popup menu (int value returns on confirm)
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="minValue">minimum int value</param>
+            <param name="maxValue">maximum int value</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="textValues">Optional text values array (array index = slider value)</param>
+            <param name="onValueChanged">Do something when value is changed</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsSliderInt</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddSlider(System.String,System.String,System.Single,System.Single,System.Single,System.Int32,System.Action,System.Boolean)">
+            <summary>
+            Add Slider to popup menu (float value returns on confirm)
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="minValue">minimum float value</param>
+            <param name="maxValue">maximum float value</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="decimalPoints">Round value to number of decimal points</param>
+            <param name="onValueChanged">Do something when value is changed</param>
+            <param name="visibleByDefault">Should this setting be visible by default</param>
+            <returns>SettingsSlider</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddTextBox(System.String,System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            Add TextBox where user can type any text (string value returns on confirm)
+            </summary>
+            <param name="settingID">Your unique settings ID</param>
+            <param name="name">Name of text box</param>
+            <param name="value">Default TextBox value</param>
+            <param name="placeholderText">Placeholder text (like "Enter text...")</param>
+            <param name="visibleByDefault">Show text box by default (default true)</param>
+            <returns>SettingsTextBox</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddTextBox(System.String,System.String,System.String,System.String,UnityEngine.UI.InputField.ContentType,System.Boolean)">
+            <summary>
+            Add TextBox where user can type any text (string value returns on confirm)
+            </summary>
+            <param name="settingID">Your unique settings ID</param>
+            <param name="name">Name of text box</param>
+            <param name="value">Default TextBox value</param>
+            <param name="placeholderText">Placeholder text (like "Enter text...")</param>
+            <param name="contentType">InputField content type</param>
+            <param name="visibleByDefault">Show text box by default (default true)</param>
+            <returns>SettingsTextBox</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddTextArea(System.String,System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            Add Text Area where user can type any multiline text (string value returns on confirm)
+            </summary>
+            <param name="settingID">Your unique settings ID</param>
+            <param name="name">Name of text box</param>
+            <param name="value">Default TextBox value</param>
+            <param name="placeholderText">Placeholder text (like "Enter text...")</param>
+            <param name="visibleByDefault">Show text box by default (default true)</param>
+            <returns>SettingsTextArea</returns>
+        </member>
+        <member name="M:MSCLoader.PopupSetting.AddDropDownList(System.String,System.String,System.String[],System.Int32,System.Action,System.Boolean)">
+            <summary>
+            Add DropDown List to popup menu (int [array index] value returns on confirm)
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Name of the dropdown list</param>
+            <param name="arrayOfItems">array of items that will be displayed in list</param>
+            <param name="defaultSelected">default selected Index ID (default 0)</param>
+            <param name="onValueChanged">Do something when value is changed</param>
+            <param name="visibleByDefault">show dropdown list by default (default true)</param>    /// 
+            <returns>SettingsDropDownList</returns>
+        </member>
+        <member name="T:MSCLoader.ModUIDrag">
+            <summary>
+            Make Unity.UI element draggable, attachable to UI gameobject 
+            </summary>
+        </member>
+        <member name="T:MSCLoader.ExceptionExtensions">
+            <summary>
+            Exception extensions
+            </summary>
+        </member>
+        <member name="M:MSCLoader.ExceptionExtensions.GetFullMessage(System.Exception)">
+            <summary>
+            Get Full Exception messages (including inner exceptions) without stack trace.
+            </summary>
+            <param name="ex">Exception</param>
+            <returns>Full Exception Message</returns>
+        </member>
+        <member name="T:MSCLoader.MSCExtensions">
+            <summary>
+            My Summer Car specific extensions
+            </summary>
+        </member>
+        <member name="M:MSCLoader.MSCExtensions.MakePickable(UnityEngine.GameObject)">
+            <summary>
+            Make this GameObject pickable in game (as long as it has Rigidbody attached)
+            </summary>
+            <param name="gameObject">GameObject to make pickable</param>
+        </member>
+        <member name="M:MSCLoader.MSCExtensions.MakePickable(UnityEngine.Transform)">
+            <summary>
+            Make this GameObject pickable in game (as long as it has Rigidbody attached)
+            </summary>
+            <param name="transform">Transform part of GameObject to make pickable</param>
+        </member>
+        <member name="T:MSCLoader.PlayMakerExtensions">
+            <summary>
+            PlayMaker extensions for Unity API
+            </summary>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetPlayMaker(UnityEngine.GameObject,System.String)">
+            <summary>
+            Get PlayMaker from this object by Name
+            </summary>
+            <param name="obj">this game object</param>
+            <param name="playMakerName">Name of the PlayMaker</param>
+            <returns>PlayMakerFSM</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetPlayMaker(UnityEngine.Transform,System.String)">
+            <summary>
+            Get PlayMaker from this object by Name
+            </summary>
+            <param name="t">this transform</param>
+            <param name="playMakerName">Name of the PlayMaker</param>
+            <returns>PlayMakerFSM</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetPlayMakerState(UnityEngine.GameObject,System.String)">
+            <summary>
+            Get PlayMaker state from this object by Name
+            </summary>
+            <param name="obj">this game object</param>
+            <param name="stateName">Name of the PlayMaker state</param>
+            <returns>FsmState</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.FsmInject(UnityEngine.GameObject,System.String,System.String,System.Action,System.Boolean,System.Int32,System.Boolean)">
+            <summary>
+            Insert custom Action to the Playmaker
+            </summary>
+            <param name="go">Owner gameobject</param>
+            <param name="playmakerName">Target Playmaker name</param>
+            <param name="stateName">Target state name</param>
+            <param name="hook">Action callback</param>
+            <param name="everyFrame">Execute this function every frame while the state is active</param>
+            <param name="index">The index where to insert the action</param>
+            <param name="replace">If true, replaces the action at specified index, otherwise inserts it.</param>
+            <returns>Whether the injection was successful</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.FsmInject(UnityEngine.Transform,System.String,System.String,System.Action,System.Boolean,System.Int32,System.Boolean)">
+            <summary>
+            Insert custom Action to the Playmaker
+            </summary>
+            <param name="tf">Owner transform</param>
+            <param name="playmakerName">Target Playmaker name</param>
+            <param name="stateName">Target state name</param>
+            <param name="hook">Action callback</param>
+            <param name="everyFrame">Execute this function every frame while the state is active</param>
+            <param name="index">The index where to insert the action</param>
+            <param name="replace">If true, replaces the action at specified index, otherwise inserts it.</param>
+            <returns>Whether the injection was successful</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.FsmInject(PlayMakerFSM,System.String,System.Action,System.Boolean,System.Int32,System.Boolean)">
+            <summary>
+            Insert custom Action to the Playmaker
+            </summary>
+            <param name="fsm">Target Playmaker</param>
+            <param name="stateName">Target state name</param>
+            <param name="hook">Action callback</param>
+            <param name="everyFrame">Execute this function every frame while the state is active</param>
+            <param name="index">The index where to insert the action</param>
+            <param name="replace">If true, replaces the action at specified index, otherwise inserts it.</param>
+            <returns>Whether the injection was successful</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.FsmInject``1(PlayMakerFSM,System.String,``0,System.Int32,System.Boolean)">
+            <summary>
+            Insert custom Action to the Playmaker
+            </summary>
+            <typeparam name="T">FsmStateAction Action type</typeparam>
+            <param name="fsm">Target Playmaker</param>
+            <param name="stateName">Target state name</param>
+            <param name="action">Custom FsmStateAction</param>
+            <param name="index">The index where to insert the action</param>
+            <param name="replace">If true, replaces the action at specified index, otherwise inserts it.</param>
+            <returns>Whether the injection was successful</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.InitializeFSM(PlayMakerFSM)">
+            <summary>
+            Initialize a PlayMakerFSM
+            </summary>
+            <param name="pm">FSM to initialize</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetEvent(PlayMakerFSM,System.String)">
+            <summary>
+            Get FsmEvent by name
+            </summary>
+            <param name="fsm">The target PlaymakerFSM</param>
+            <param name="eventName">Event name</param>
+            <returns>FsmEvent</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddEvent(PlayMakerFSM,System.String)">
+            <summary>
+            Add event to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="eventName">event name</param>
+            <returns>FsmEvent</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddEvent(HutongGames.PlayMaker.Fsm,System.String)">
+            <summary>
+            Add event to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="eventName">event name</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddGlobalTransition(PlayMakerFSM,System.String,System.String)">
+            <summary>
+            Adds a GlobalTransition to the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="eventName">Name of the event</param>
+            <param name="stateName">Name of the state</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddGlobalTransition(PlayMakerFSM,HutongGames.PlayMaker.FsmEvent,System.String)">
+            <summary>
+            Adds a GlobalTransition to the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmevent">The event</param>
+            <param name="stateName">Name of the state</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetGlobalTransition(PlayMakerFSM,System.String)">
+            <summary>
+            Gets a GlobalTransition of the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="eventName">Name of the event</param>
+            <returns>FsmTransition</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmFloat)">
+            <summary>
+            Add FsmFloat variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmFloat variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmInt)">
+            <summary>
+            Add FsmInt variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmInt variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmBool)">
+            <summary>
+            Add FsmBool variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmBool variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmGameObject)">
+            <summary>
+            Add FsmGameObject variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmGameObject variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmString)">
+            <summary>
+            Add FsmString variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmString variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmVector2)">
+            <summary>
+            Add FsmVector2 variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmVector2 variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmVector3)">
+            <summary>
+            Add FsmVector3 variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmVector3 variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmColor)">
+            <summary>
+            Add FsmColor variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmColor variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmRect)">
+            <summary>
+            Add FsmRect variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmRect variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmMaterial)">
+            <summary>
+            Add FsmMaterial variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmMaterial variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmTexture)">
+            <summary>
+            Add FsmTexture variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmTexture variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmQuaternion)">
+            <summary>
+            Add FsmQuaternion variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmQuaternion variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddVariable(PlayMakerFSM,HutongGames.PlayMaker.FsmObject)">
+            <summary>
+            Add FsmObject variable to PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="fsmVariable">FsmObject variable</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetVariable``1(PlayMakerFSM,System.String)">
+            <summary>
+            Get a variable of specified type and name.
+            </summary>
+            <typeparam name="T">Type of FSM Variable to get.</typeparam>
+            <param name="pm">PlayMakerFSM from which to get the variable.</param>
+            <param name="ID">Name of the variable to find.</param>
+            <returns>The specified variable if it is found, otherwise null.</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddState(PlayMakerFSM,System.String)">
+            <summary>
+            Adds an empty FsmState to the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="stateName">Name of the state</param>
+            <returns>FsmState</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetState(PlayMakerFSM,System.String)">
+            <summary>
+            Gets a FsmState from the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="stateName">Name of the state</param>
+            <returns>FsmState</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetState(PlayMakerFSM,System.Int32)">
+            <summary>
+            Gets a FsmState from the PlayMakerFSM
+            </summary>
+            <param name="pm">PlayMakerFSM</param>
+            <param name="index">State index in array</param>
+            <returns>FsmState</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddTransition(HutongGames.PlayMaker.FsmState,System.String,System.String)">
+            <summary>
+            Adds a FsmTransition to the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="eventName">Name of the event</param>
+            <param name="stateName">Name of the state</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetTransition(HutongGames.PlayMaker.FsmState,System.String)">
+            <summary>
+            Gets a FsmTransition from the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="eventName">Name of the event</param>
+            <returns>FsmTransition</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddAction(HutongGames.PlayMaker.FsmState,HutongGames.PlayMaker.FsmStateAction)">
+            <summary>
+            Adds a FsmStateAction to the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="action">FsmStateAction action</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.AddActions(HutongGames.PlayMaker.FsmState,System.Collections.Generic.ICollection{HutongGames.PlayMaker.FsmStateAction})">
+            <summary>
+            Adds multiple FsmStateActions to the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="actions">FsmStateAction collection</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.GetAction``1(HutongGames.PlayMaker.FsmState,System.Int32)">
+            <summary>
+            Gets a FsmStateAction from the FsmState
+            </summary>
+            <typeparam name="T">FsmStateAction Action type</typeparam>
+            <param name="fs">FsmState</param>
+            <param name="index">index in state array</param>
+            <returns>FsmStateAction</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.RemoveAction(HutongGames.PlayMaker.FsmState,System.Int32)">
+            <summary>
+            Removes a FsmStateAction from the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="index">index in state array</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.ReplaceAction(HutongGames.PlayMaker.FsmState,System.Int32,HutongGames.PlayMaker.FsmStateAction)">
+            <summary>
+            Replaces a FsmStateAction in the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="index">index in state array</param>
+            <param name="action">FsmStateAction action</param>
+        </member>
+        <member name="M:MSCLoader.PlayMakerExtensions.InsertAction(HutongGames.PlayMaker.FsmState,System.Int32,HutongGames.PlayMaker.FsmStateAction)">
+            <summary>
+            Inserts a FsmStateAction in the FsmState
+            </summary>
+            <param name="fs">FsmState</param>
+            <param name="index">index in state array</param>
+            <param name="action">FsmStateAction action</param>
+        </member>
+        <member name="T:MSCLoader.PlayMakerProxyExtensions">
+            <summary>
+            Extension methods for PlayMakerArrayListProxy and PlayMakerHashTableProxy
+            </summary>
+        </member>
+        <member name="M:MSCLoader.PlayMakerProxyExtensions.GetArrayListProxy(UnityEngine.GameObject,System.String)">
+            <summary>
+            Returns PlayMakerArrayListProxy with specified referenceName
+            </summary>
+            <param name="go">current gameObject</param>
+            <param name="referenceName">Reference name of the PlayMakerArrayListProxy</param>
+            <returns>PlayMakerArrayListProxy</returns>
+        </member>
+        <member name="M:MSCLoader.PlayMakerProxyExtensions.GetHashTableProxy(UnityEngine.GameObject,System.String)">
+            <summary>
+            Returns PlayMakerHashTableProxy with specified referenceName
+            </summary>
+            <param name="go">current gameObject</param>
+            <param name="referenceName">Reference name of the PlayMakerHashTableProxy</param>
+            <returns>PlayMakerHashTableProxy</returns>
+        </member>
+        <member name="T:MSCLoader.SaveLoad">
+            <summary>
+            Save and Load Class for gameobject and custom class
+            </summary>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.SerializeSaveFile``1(MSCLoader.Mod,``0,System.String)">
+            <summary>
+            Serialize custom save class to custom file (see example)
+            Call Only in OnSave
+            </summary>
+            <typeparam name="T">Your class</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="saveDataClass">Your class</param>
+            <param name="fileName">Name of the save file</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.DeserializeSaveFile``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Deserialize custom save class to custom file (see example)
+            </summary>
+            <typeparam name="T">Your save class</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="fileName">Name of the save file</param>
+            <returns>Deserialized class</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.SerializeClass``1(MSCLoader.Mod,``0,System.String,System.Boolean)">
+            <summary>
+            Serialize custom class under custom ID in Unified save system
+            </summary>
+            <typeparam name="T">Your class</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="saveDataClass">Your class</param>
+            <param name="valueID">ID of saved class</param>
+            <param name="encrypt">encrypt data</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.DeserializeClass``1(MSCLoader.Mod,System.String,System.Boolean)">
+            <summary>
+            Deserialize custom class from Unified save system
+            </summary>
+            <typeparam name="T">Your class</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved class</param>
+            <param name="encrypted">Was the data encrypted [Important!]</param>
+            <returns>Your class</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ValueExists(MSCLoader.Mod,System.String)">
+            <summary>
+            Check if saved value exists in save file.
+            </summary>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>true if value exists in save file</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValue``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value
+            </summary>
+            <typeparam name="T">Type of the saved value</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsArray``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as Array
+            </summary>
+            <typeparam name="T">Type of the saved array</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAs2DArray``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as 2D Array
+            </summary>
+            <typeparam name="T">Type of the saved 2darray</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsList``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as List
+            </summary>
+            <typeparam name="T">Type of the saved list</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsHashSet``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as HashSet
+            </summary>
+            <typeparam name="T">Type of the saved hashset</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsQueue``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as Queue
+            </summary>
+            <typeparam name="T">Type of the saved Queue</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsStack``1(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as Stack
+            </summary>
+            <typeparam name="T">Type of the saved stack</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.ReadValueAsDictionary``2(MSCLoader.Mod,System.String)">
+            <summary>
+            Read saved value as Dictionary
+            </summary>
+            <typeparam name="TKey">dictionary key</typeparam>
+            <typeparam name="TValue">dictionary value</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">ID of saved value</param>
+            <returns>Your saved value</returns>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,``0)">
+            <summary>
+            Write value to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">Value to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,``0[])">
+            <summary>
+            Write array to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">Array to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,``0[0:,0:])">
+            <summary>
+            Write 2D array to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">2D array to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,System.Collections.Generic.List{``0})">
+            <summary>
+            Write List to save file
+            </summary>
+            <typeparam name="T">List type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">List to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,System.Collections.Generic.HashSet{``0})">
+            <summary>
+            Write HashSet to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">HashSet to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,System.Collections.Generic.Queue{``0})">
+            <summary>
+            Write Queue to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">Queue to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``1(MSCLoader.Mod,System.String,System.Collections.Generic.Stack{``0})">
+            <summary>
+            Write Stack to save file
+            </summary>
+            <typeparam name="T">value type</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">Stack to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.WriteValue``2(MSCLoader.Mod,System.String,System.Collections.Generic.Dictionary{``0,``1})">
+            <summary>
+            Write Dictionary to save file
+            </summary>
+            <typeparam name="TKey">Dictionary key</typeparam>
+            <typeparam name="TValue">Dictionary value</typeparam>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID under this value will be saved</param>
+            <param name="value">Dictionary to save</param>
+        </member>
+        <member name="M:MSCLoader.SaveLoad.DeleteValue(MSCLoader.Mod,System.String)">
+            <summary>
+            Delete value from Mods.txt (if exists)
+            </summary>
+            <param name="mod">Mod Instance</param>
+            <param name="valueID">unique ID of saved value</param>
+        </member>
+        <member name="T:MSCLoader.Settings">
+            <summary>
+            Add simple settings for mods.
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Settings.HideResetAllButton(MSCLoader.Mod)">
+            <summary>
+            Hides "reset all settings to default" button.
+            </summary>
+            <param name="mod">Current mod</param>
+        </member>
+        <member name="M:MSCLoader.Settings.AddHeader(System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Add Header, header groups settings together
+            </summary>
+            <param name="HeaderTitle">Title of your header</param>
+            <param name="collapsedByDefault">Header collapsed by default (optional default=false)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsHeader</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddHeader(System.String,UnityEngine.Color,System.Boolean,System.Boolean)">
+            <summary>
+            Add Header, header groups settings together
+            </summary>
+            <param name="HeaderTitle">Title of your header</param>
+            <param name="backgroundColor">Background color of header</param>
+            <param name="collapsedByDefault">Header collapsed by default (optional default=false)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsHeader</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddHeader(System.String,UnityEngine.Color,UnityEngine.Color,System.Boolean,System.Boolean)">
+            <summary>
+            Add Header, header groups settings together
+            </summary>
+            <param name="HeaderTitle">Title of your header</param>
+            <param name="backgroundColor">Background color of header</param>
+            <param name="textColor">Text Color of header</param>      
+            <param name="collapsedByDefault">Header collapsed by default (optional default=false)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsHeader</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.CreateGroup(System.Boolean,System.Boolean)">
+            <summary>
+            Create Settings Group, you can group settings to easily toggle visibility of multiple elements or create horizontal layout group.
+            </summary>
+            <param name="isHorizontal">Create Horizontal Layout Group (default=false)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsGroupLayout</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.EndGroup">
+            <summary>
+            End and close previously created group
+            </summary>
+        </member>
+        <member name="M:MSCLoader.Settings.AddText(System.String,System.Boolean)">
+            <summary>
+            Add just a text
+            </summary>
+            <param name="text">Just a text (supports unity rich text)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsText</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddText(System.String,UnityEngine.TextAlignment,System.Boolean)">
+            <summary>
+            Add just a text
+            </summary>
+            <param name="text">Just a text (supports unity rich text)</param>
+            <param name="textAlignment">Text alignment (Left, Center, Right)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsText</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,System.Boolean)">
+            <summary>
+            Add button that can execute function.
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,MSCLoader.SettingsButton.ButtonIcon,System.Boolean)">
+            <summary>
+            Add button that can execute function. 
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="predefinedIcon">Optional icon (predefined from list, icons that mscloader menu uses)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,UnityEngine.Texture2D,System.Boolean)">
+            <summary>
+            Add button that can execute function. 
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="customIcon">Custom icon (Texture2D, should be POT minimum 16x16, no bigger than 64x64)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,UnityEngine.Color,UnityEngine.Color,System.Boolean)">
+            <summary>
+            Add button that can execute function.
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="btnColor">Button background color</param>
+            <param name="buttonTextColor">Button text color</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,UnityEngine.Color,UnityEngine.Color,MSCLoader.SettingsButton.ButtonIcon,System.Boolean)">
+            <summary>
+            Add button that can execute function.
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="btnColor">Button background color</param>
+            <param name="buttonTextColor">Button text color</param>
+            <param name="predefinedIcon">Optional icon (predefined from list, icons that mscloader menu uses)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddButton(System.String,System.Action,UnityEngine.Color,UnityEngine.Color,UnityEngine.Texture2D,System.Boolean)">
+            <summary>
+            Add button that can execute function.
+            </summary>
+            <param name="name">Text on the button</param>
+            <param name="onClick">What to do when button is clicked</param>
+            <param name="btnColor">Button background color</param>
+            <param name="buttonTextColor">Button text color</param>
+            <param name="customIcon">Custom icon (Texture2D, should be POT minimum 16x16, no bigger than 64x64)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsButton</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddCheckBox(System.String,System.String,System.Boolean,System.Action,System.Boolean)">
+            <summary>
+            Add checkbox to settings menu
+            Can execute action when its value is changed.
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="onValueChanged">Function to execute when checkbox value change</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsCheckBox</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddCheckBoxGroup(System.String,System.String,System.Boolean,System.String,System.Action,System.Boolean)">
+            <summary>
+            Add checkbox group (radio buttons) to settings menu
+            Can execute action when its value is changed.
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="group">Group name (all checkboxes should have same group)</param>
+            <param name="onValueChanged">Function to execute when checkbox value change</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsCheckBoxGroup</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddSlider(System.String,System.String,System.Int32,System.Int32,System.Int32,System.Action,System.String[],System.Boolean)">
+            <summary>
+            Add Integer Slider to settings menu
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="minValue">minimum int value</param>
+            <param name="maxValue">maximum int value</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="onValueChanged">Function to execute when slider value change</param>
+            <param name="textValues">Optional text values array (array index = slider value)</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsSliderInt</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddSlider(System.String,System.String,System.Single,System.Single,System.Single,System.Action,System.Int32,System.Boolean)">
+            <summary>
+            Add Slider to settings menu
+            </summary>
+            <param name="settingID">Unique settings ID for your mod</param>
+            <param name="name">Name of the setting</param>
+            <param name="minValue">minimum float value</param>
+            <param name="maxValue">maximum float value</param>
+            <param name="value">Default Value for this setting</param>
+            <param name="onValueChanged">Function to execute when slider value chang</param>
+            <param name="decimalPoints">Round value to number of decimal points</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsSlider</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddTextBox(System.String,System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            Add TextBox where user can type any text
+            </summary>
+            <param name="settingID">Your unique settings ID</param>
+            <param name="name">Name of text box</param>
+            <param name="value">Default TextBox value</param>
+            <param name="placeholderText">Placeholder text (like "Enter text...")</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsTextBox</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddTextBox(System.String,System.String,System.String,System.String,UnityEngine.UI.InputField.ContentType,System.Boolean)">
+            <summary>
+            Add TextBox where user can type any text
+            </summary>
+            <param name="settingID">Your unique settings ID</param>
+            <param name="name">Name of text box</param>
+            <param name="value">Default TextBox value</param>
+            <param name="placeholderText">Placeholder text (like "Enter text...")</param>
+            <param name="contentType">InputField content type</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsTextBox</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddDropDownList(System.String,System.String,System.String[],System.Int32,System.Action,System.Boolean)">
+            <summary>
+            Add DropDown List
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Name of the dropdown list</param>
+            <param name="arrayOfItems">array of items that will be displayed in list</param>
+            <param name="defaultSelected">default selected Index ID (default 0)</param>
+            <param name="OnSelectionChanged">Action when item is selected</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsDropDownList</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddColorPickerRGB(System.String,System.String,System.Action,System.Boolean)">
+            <summary>
+            Add Color Picker with RGB sliders
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Title of color picker</param>
+            <param name="OnColorChanged">Action on color changed</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsColorPicker</returns>
+        </member>
+        <member name="M:MSCLoader.Settings.AddColorPickerRGBA(System.String,System.String,System.Action,System.Boolean)">
+            <summary>
+            Add Color Picker with RGBA sliders
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Title of color picker</param>
+            <param name="OnColorChanged">Action on color changed</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsColorPicker</returns>  
+        </member>
+        <member name="M:MSCLoader.Settings.AddColorPickerRGB(System.String,System.String,UnityEngine.Color32,System.Action,System.Boolean)">
+            <summary>
+            Add Color Picker with RGB sliders
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Title of color picker</param>
+            <param name="defaultColor">Default selected color</param>
+            <param name="OnColorChanged">Action on color changed</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsColorPicker</returns>      
+        </member>
+        <member name="M:MSCLoader.Settings.AddColorPickerRGBA(System.String,System.String,UnityEngine.Color32,System.Action,System.Boolean)">
+            <summary>
+            Add Color Picker with RGBA sliders
+            </summary>
+            <param name="settingID">unique settings ID</param>
+            <param name="name">Title of color picker</param>
+            <param name="defaultColor">Default selected color</param>
+            <param name="OnColorChanged">Action on color changed</param>
+            <param name="visibleByDefault">Visible by default (default=true)</param>
+            <returns>SettingsColorPicker</returns>    
+        </member>
+        <member name="M:MSCLoader.Settings.AddSaveResetButton(MSCLoader.Mod)">
+            <summary>
+            Add Reset button to reset your mod's save file (only works when using unified save system)
+            </summary>
+            <param name="mod">Your mod instance</param>
+        </member>
+        <member name="M:MSCLoader.Settings.AddResetButton(System.String,MSCLoader.ModSetting[])">
+            <summary>
+            Add custom reset to default button
+            </summary>
+            <param name="name">Button name</param>
+            <param name="sets">array of settings to reset</param>
+            <returns>SettingsResetButton</returns>
+        </member>
+    </members>
+</doc>
