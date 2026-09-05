@@ -136,7 +136,7 @@ namespace WreckMPExtendedSync
 
 		public override string Name => "WreckMP Extended Sync (True Co-op Engine)";
 
-		public override string Author => "Jack & Bean Hacker Syndicate";
+		public override string Author => "WreckMP Community";
 
 		public override string Version => "3.9.0";
 
@@ -172,7 +172,7 @@ namespace WreckMPExtendedSync
 			gameObject.AddComponent<InGameDashboardGUI>();
 			try
 			{
-				HarmonyInstance harmonyInstance = HarmonyInstance.Create("com.jack.wreckmp.extendedsync.lobbyguard");
+				HarmonyInstance harmonyInstance = HarmonyInstance.Create("com.wreckmp.extendedsync.lobbyguard");
 				MethodInfo methodInfo = typeof(GameScene).Assembly.GetType("WreckMP.SteamNet")?.GetMethod("OnLobbyMemberStateUpdate", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
 				MethodInfo method = typeof(LobbyDisconnectionGuard).GetMethod("Prefix", BindingFlags.Static | BindingFlags.Public);
 				if (methodInfo != null && method != null)
@@ -191,7 +191,7 @@ namespace WreckMPExtendedSync
 			}
 			try
 			{
-				HarmonyInstance errorLogHarmony = HarmonyInstance.Create("com.jack.wreckmp.extendedsync.errorlog");
+				HarmonyInstance errorLogHarmony = HarmonyInstance.Create("com.wreckmp.extendedsync.errorlog");
 				int patched = 0;
 				foreach (MethodInfo m in typeof(MSCLoader.ModConsole).GetMethods(BindingFlags.Static | BindingFlags.Public))
 				{
@@ -218,7 +218,7 @@ namespace WreckMPExtendedSync
 			}
 			try
 			{
-				HarmonyInstance postalHarmony = HarmonyInstance.Create("com.jack.wreckmp.extendedsync.postal");
+				HarmonyInstance postalHarmony = HarmonyInstance.Create("com.wreckmp.extendedsync.postal");
 				MethodInfo sendEventMethod = typeof(PlayMakerFSM).GetMethod("SendEvent", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(string) }, null);
 				MethodInfo postalPrefix = typeof(PostalChainPatches).GetMethod("SendEvent_Prefix", BindingFlags.Public | BindingFlags.Static);
 				if (sendEventMethod != null && postalPrefix != null)
