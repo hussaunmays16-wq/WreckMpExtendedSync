@@ -142,7 +142,7 @@ namespace WreckMPExtendedSync
 
 		public override string Author => "WreckMP Community";
 
-		public override string Version => "3.9.9";
+		public override string Version => "3.10.0";
 
 		public override string Description => "Полноценная автоматическая синхронизация: пассажир Jonnez (клавиша U), капот Сацумы, чемодан Йоуко, Паятсо, килью, заказ, почта и коробки Теймо.";
 
@@ -235,7 +235,7 @@ namespace WreckMPExtendedSync
 			{
 				ModConsole.Error("[PostalChain Harmony Error] " + ex.Message);
 			}
-			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.9.9]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
+			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.10.0]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
 		}
 	}
 	public static class LobbyDisconnectionGuard
@@ -292,11 +292,8 @@ namespace WreckMPExtendedSync
 		private void OnLevelWasLoaded(int level)
 		{
 			string loadedLevelName = Application.loadedLevelName;
-			if (loadedLevelName != lastScene)
-			{
-				lastScene = loadedLevelName;
-				OnSceneChanged(loadedLevelName);
-			}
+			lastScene = loadedLevelName;
+			OnSceneChanged(loadedLevelName);
 		}
 
 		public void OnSceneChanged(string sceneName)
@@ -541,6 +538,8 @@ namespace WreckMPExtendedSync
 
 		private bool suitcaseWasFoundOnce;
 
+		private Vector3 lastSuitcasePos;
+
 		public bool isSceneResetting;
 
 		private void Awake()
@@ -562,6 +561,7 @@ namespace WreckMPExtendedSync
 			cachedSuitcase = null;
 			hasBeenClaimed = false;
 			suitcaseWasFoundOnce = false;
+			lastSuitcasePos = Vector3.zero;
 			isSceneResetting = true;
 			if (Application.loadedLevelName == "GAME")
 			{
@@ -593,6 +593,7 @@ namespace WreckMPExtendedSync
 				if (cachedSuitcase != null)
 				{
 					suitcaseWasFoundOnce = true;
+					lastSuitcasePos = cachedSuitcase.transform.position;
 					PlayMakerFSM component = cachedSuitcase.GetComponent<PlayMakerFSM>();
 					if (component != null)
 					{
@@ -621,16 +622,28 @@ namespace WreckMPExtendedSync
 			{
 				return;
 			}
+			if (cachedSuitcase != null && cachedSuitcase.activeInHierarchy)
+			{
+				lastSuitcasePos = cachedSuitcase.transform.position;
+			}
 			if (cachedSuitcase == null && suitcaseWasFoundOnce && !hasBeenClaimed && !isNetworkApplying)
 			{
 				// Игра уничтожила (Destroy) чемодан вместо SetActive(false) —
-				// кейс сюжетного продвижения. Считаем взятым.
-				BroadcastSuitcaseTaken();
+				// проверяем, был ли игрок рядом
+				float dist = (Camera.main != null && lastSuitcasePos.sqrMagnitude > 0.1f) ? Vector3.Distance(Camera.main.transform.position, lastSuitcasePos) : 0f;
+				if (dist < 6.0f)
+				{
+					BroadcastSuitcaseTaken();
+				}
 				return;
 			}
 			if (cachedSuitcase != null && !cachedSuitcase.activeInHierarchy)
 			{
-				BroadcastSuitcaseTaken();
+				float dist = (Camera.main != null && lastSuitcasePos.sqrMagnitude > 0.1f) ? Vector3.Distance(Camera.main.transform.position, lastSuitcasePos) : 0f;
+				if (dist < 6.0f)
+				{
+					BroadcastSuitcaseTaken();
+				}
 				return;
 			}
 		}
@@ -787,6 +800,8 @@ namespace WreckMPExtendedSync
 				if (fsmFloat != null)
 				{
 					fsmFloat.Value += num;
+					BetterCheatBoxSyncManager.lastNetworkMoneyApplyTime = Time.time;
+					BetterCheatBoxSyncManager.Instance?.ApplyMoneyLocal(fsmFloat.Value);
 				}
 				if (pajatsoFsm != null)
 				{
@@ -812,6 +827,8 @@ namespace WreckMPExtendedSync
 
 		private bool isKiljuHooked;
 
+		private float lastKiljuSaleTime = 0f;
+
 		private void Awake()
 		{
 			Instance = this;
@@ -829,6 +846,7 @@ namespace WreckMPExtendedSync
 			StopAllCoroutines();
 			isNetworkApplying = false;
 			isKiljuHooked = false;
+			lastKiljuSaleTime = 0f;
 			if (Application.loadedLevelName == "GAME")
 			{
 				StartCoroutine(LazyFindJokke());
@@ -852,8 +870,9 @@ namespace WreckMPExtendedSync
 					{
 						SafeFsmWatcher.Attach(fsm, new string[3] { "Pay", "Drink", "State 1" }, delegate
 						{
-							if (!isNetworkApplying)
+							if (!isNetworkApplying && (Time.time - lastKiljuSaleTime >= 1.5f))
 							{
+								lastKiljuSaleTime = Time.time;
 								FsmFloat paymentVar = fsm.FsmVariables.FindFsmFloat("Payment") ?? 
 								                      fsm.FsmVariables.FindFsmFloat("Money") ?? 
 								                      fsm.FsmVariables.FindFsmFloat("Payout") ?? 
@@ -3779,10 +3798,10 @@ namespace WreckMPExtendedSync
 							receiverFsm = handleTf.GetComponent<PlayMakerFSM>() ?? handleTf.GetComponentInChildren<PlayMakerFSM>();
 							if (receiverFsm != null)
 							{
+								string pickState = "Pick phone";
+								string closeState = "Close phone";
 								try
 								{
-									string pickState = "Pick phone";
-									string closeState = "Close phone";
 									if (receiverFsm.FsmStates != null)
 									{
 										for (int st = 0; st < receiverFsm.FsmStates.Length; st++)
@@ -3799,11 +3818,11 @@ namespace WreckMPExtendedSync
 								}
 								catch {}
 
-								SafeFsmWatcher.Attach(receiverFsm, new string[] { "Pick phone", "Close phone" }, () =>
+								SafeFsmWatcher.Attach(receiverFsm, new string[] { pickState, closeState, "Pick phone", "Close phone" }, () =>
 								{
 									if (isNetworkApplying || receiverFsm == null) return;
 									string active = receiverFsm.ActiveStateName;
-									bool picked = string.Equals(active, "Pick phone", StringComparison.OrdinalIgnoreCase);
+									bool picked = string.Equals(active, pickState, StringComparison.OrdinalIgnoreCase) || string.Equals(active, "Pick phone", StringComparison.OrdinalIgnoreCase);
 									if (picked != cachedReceiverPickedUp)
 									{
 										cachedReceiverPickedUp = picked;
@@ -4390,10 +4409,10 @@ namespace WreckMPExtendedSync
 
 					if (flashlightFsm != null)
 					{
+						string onState = "On";
+						string offState = "Off";
 						try
 						{
-							string onState = "On";
-							string offState = "Off";
 							if (flashlightFsm.FsmStates != null)
 							{
 								for (int st = 0; st < flashlightFsm.FsmStates.Length; st++)
@@ -4410,7 +4429,7 @@ namespace WreckMPExtendedSync
 						}
 						catch {}
 
-						SafeFsmWatcher.Attach(flashlightFsm, new string[] { "On", "On 2", "Off", "OFF", "State 2" }, () =>
+						SafeFsmWatcher.Attach(flashlightFsm, new string[] { onState, offState, "On", "On 2", "Off", "OFF", "State 2" }, () =>
 						{
 							if (isNetworkApplying) return;
 							bool on = (flashlightLight != null) ? (flashlightLight.enabled && flashlightLight.gameObject.activeInHierarchy) : false;

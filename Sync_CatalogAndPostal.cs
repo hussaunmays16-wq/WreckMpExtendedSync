@@ -261,6 +261,7 @@ namespace WreckMPExtendedSync
 			{
 				StartCoroutine(LazyHookCatalogAndPostal());
 				StartCoroutine(ClearSceneResettingFlag());
+				StartCoroutine(LazyRegisterExistingCatalogParts());
 			}
 			else
 			{
@@ -972,6 +973,12 @@ namespace WreckMPExtendedSync
 					rb.isKinematic = false;
 					rb.mass = 0.2f;
 					rb.useGravity = true;
+					rb.position = pos;
+					rb.rotation = rot;
+					rb.velocity = Vector3.zero;
+					rb.angularVelocity = Vector3.zero;
+					env.transform.position = pos;
+					env.transform.rotation = rot;
 
 					PlayMakerFSM[] envFsms = env.GetComponentsInChildren<PlayMakerFSM>(true);
 					for (int f = 0; f < envFsms.Length; f++)
@@ -1785,6 +1792,27 @@ namespace WreckMPExtendedSync
 			return false;
 		}
 
+		public static GameObject GetParcelBoxRoot(GameObject go)
+		{
+			if (go == null) return null;
+			Transform cur = go.transform;
+			GameObject bestBox = null;
+			while (cur != null)
+			{
+				string cName = cur.name ?? "";
+				if (cName.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 6) break;
+				if (cName.IndexOf("PLAYER", StringComparison.OrdinalIgnoreCase) >= 0) break;
+				if (cName.IndexOf("YARD", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 5) break;
+				if (cName.IndexOf("SATSUMA", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 8) break;
+				if (IsParcelBox(cName) || IsParcelBox(cur.gameObject))
+				{
+					bestBox = cur.gameObject;
+				}
+				cur = cur.parent;
+			}
+			return bestBox ?? (IsParcelBox(go) ? go : null);
+		}
+
 		public static string FindSpawnedPartNameFromFsm(GameObject box)
 		{
 			if (box == null) return "";
@@ -1798,14 +1826,20 @@ namespace WreckMPExtendedSync
 					{
 						FsmGameObject fsmGo = fsms[i].FsmVariables.FindFsmGameObject("Item") ?? 
 						                      fsms[i].FsmVariables.FindFsmGameObject("Part") ?? 
-						                      fsms[i].FsmVariables.FindFsmGameObject("Spawn");
+						                      fsms[i].FsmVariables.FindFsmGameObject("Spawn") ??
+						                      fsms[i].FsmVariables.FindFsmGameObject("Product") ??
+						                      fsms[i].FsmVariables.FindFsmGameObject("Prefab");
 						if (fsmGo != null && fsmGo.Value != null)
 						{
 							return fsmGo.Value.name;
 						}
 						FsmString fsmStr = fsms[i].FsmVariables.FindFsmString("Item") ?? 
 						                   fsms[i].FsmVariables.FindFsmString("Part") ?? 
-						                   fsms[i].FsmVariables.FindFsmString("Name");
+						                   fsms[i].FsmVariables.FindFsmString("Name") ??
+						                   fsms[i].FsmVariables.FindFsmString("Product") ??
+						                   fsms[i].FsmVariables.FindFsmString("ItemName") ??
+						                   fsms[i].FsmVariables.FindFsmString("PartName") ??
+						                   fsms[i].FsmVariables.FindFsmString("Item_Name");
 						if (fsmStr != null && !string.IsNullOrEmpty(fsmStr.Value))
 						{
 							return fsmStr.Value;
@@ -1823,13 +1857,18 @@ namespace WreckMPExtendedSync
 									var action = state.Actions[a];
 									if (action != null)
 									{
-										var field = action.GetType().GetField("gameObject", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-										if (field != null)
+										Type actType = action.GetType();
+										string[] fieldNames = new string[5] { "gameObject", "spawnObject", "prefab", "template", "item" };
+										for (int fn = 0; fn < fieldNames.Length; fn++)
 										{
-											var val = field.GetValue(action) as FsmGameObject;
-											if (val != null && val.Value != null)
+											var field = actType.GetField(fieldNames[fn], BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+											if (field != null)
 											{
-												return val.Value.name;
+												var val = field.GetValue(action) as FsmGameObject;
+												if (val != null && val.Value != null)
+												{
+													return val.Value.name;
+												}
 											}
 										}
 									}
@@ -1958,19 +1997,11 @@ namespace WreckMPExtendedSync
 					if (col == null) continue;
 					GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.gameObject;
 					if (go == null) continue;
-					string n = go.name ?? "";
-					string rootN = (go.transform.root != null) ? (go.transform.root.name ?? "") : "";
 
-					if (n.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 && n.Length <= 5) continue;
-					if (n.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0) continue;
-
-					if (IsParcelBox(n) || IsParcelBox(rootN) || IsParcelBox(go))
+					GameObject boxObj = GetParcelBoxRoot(go);
+					if (boxObj != null && !candidates.Contains(boxObj))
 					{
-						GameObject boxObj = (go.transform.root != null && IsParcelBox(go.transform.root.gameObject)) ? go.transform.root.gameObject : go;
-						if (!candidates.Contains(boxObj))
-						{
-							candidates.Add(boxObj);
-						}
+						candidates.Add(boxObj);
 					}
 				}
 			}
@@ -1986,16 +2017,25 @@ namespace WreckMPExtendedSync
 					{
 						PlayMakerFSM f = storeFsms[j];
 						if (f == null || f.gameObject == null) continue;
-						string fn = f.gameObject.name ?? "";
-						if (fn.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 || fn.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0) continue;
-						if (IsParcelBox(fn) || IsParcelBox(f.gameObject))
+						GameObject boxObj = GetParcelBoxRoot(f.gameObject);
+						if (boxObj != null && !candidates.Contains(boxObj))
 						{
-							if (!candidates.Contains(f.gameObject))
-							{
-								candidates.Add(f.gameObject);
-							}
+							candidates.Add(boxObj);
 						}
 					}
+				}
+			}
+
+			// Отслеживание уже занятых индексов заказа
+			HashSet<int> usedItemIndices = new HashSet<int>();
+			for (int c = 0; c < candidates.Count; c++)
+			{
+				GameObject boxGo = candidates[c];
+				if (boxGo == null) continue;
+				ParcelUnboxTracker existingTracker = boxGo.GetComponent<ParcelUnboxTracker>();
+				if (existingTracker != null && existingTracker.ItemIndex >= 0)
+				{
+					usedItemIndices.Add(existingTracker.ItemIndex);
 				}
 			}
 
@@ -2030,7 +2070,23 @@ namespace WreckMPExtendedSync
 						{
 							tracker.ItemIndex = i;
 							tracker.PartName = lastOrderItems[i];
+							usedItemIndices.Add(i);
 							break;
+						}
+					}
+
+					// Если FSM не содержит имени детали, назначаем следующий свободный индекс из заказа
+					if (tracker.ItemIndex < 0)
+					{
+						for (int i = 0; i < lastOrderItems.Count; i++)
+						{
+							if (!usedItemIndices.Contains(i))
+							{
+								tracker.ItemIndex = i;
+								tracker.PartName = lastOrderItems[i];
+								usedItemIndices.Add(i);
+								break;
+							}
 						}
 					}
 				}
@@ -2046,7 +2102,7 @@ namespace WreckMPExtendedSync
 					{
 						PlayMakerFSM boxFsm = boxFsms[f];
 						if (boxFsm == null) continue;
-						SafeFsmWatcher.Attach(boxFsm, new string[9] { "1", "Open", "Assemble", "Unbox", "AssembleItems", "OPEN", "ASSEMBLE", "State 2", "Spawn" }, delegate
+						SafeFsmWatcher.Attach(boxFsm, new string[12] { "1", "Open", "Assemble", "Unbox", "AssembleItems", "OPEN", "ASSEMBLE", "State 2", "Spawn", "USE", "ACTIVATE", "Unpack" }, delegate
 						{
 							if (suppressedParcels.Contains(localId))
 							{
@@ -2072,27 +2128,39 @@ namespace WreckMPExtendedSync
 
 		public IEnumerator InitiatorUnboxCoroutine(Vector3 boxPos, GameObject boxGo, string boxName, int itemIndex = -1)
 		{
+			// Извлекаем все данные ДО ожидания, пока GameObject коробки ещё не уничтожен игрой!
+			string prePartName = "";
+			ParcelUnboxTracker trk = null;
+			if (boxGo != null)
+			{
+				prePartName = FindSpawnedPartNameFromFsm(boxGo);
+				trk = boxGo.GetComponent<ParcelUnboxTracker>();
+				if (trk != null)
+				{
+					if (itemIndex < 0 && trk.ItemIndex >= 0)
+					{
+						itemIndex = trk.ItemIndex;
+					}
+					if (string.IsNullOrEmpty(prePartName) && !string.IsNullOrEmpty(trk.PartName))
+					{
+						prePartName = trk.PartName;
+					}
+				}
+			}
+			if (string.IsNullOrEmpty(prePartName))
+			{
+				prePartName = ExtractPartNameFromBox(boxName);
+			}
+
 			yield return new WaitForFixedUpdate();
 			yield return new WaitForSeconds(0.15f);
 
 			if (isSceneResetting) yield break;
 
 			string cleanPartName = "";
-			if (boxGo != null)
+			if (!string.IsNullOrEmpty(prePartName))
 			{
-				cleanPartName = FindSpawnedPartNameFromFsm(boxGo);
-				if (itemIndex < 0)
-				{
-					ParcelUnboxTracker trk = boxGo.GetComponent<ParcelUnboxTracker>();
-					if (trk != null && trk.ItemIndex >= 0)
-					{
-						itemIndex = trk.ItemIndex;
-					}
-				}
-			}
-			if (!string.IsNullOrEmpty(cleanPartName))
-			{
-				cleanPartName = UniversalHandItemSync.GetCleanItemName(cleanPartName);
+				cleanPartName = UniversalHandItemSync.GetCleanItemName(prePartName);
 			}
 
 			// Check tight 2.2m radius for spawned part, strictly filtering out vehicle parts
@@ -2140,23 +2208,14 @@ namespace WreckMPExtendedSync
 				}
 			}
 
-			if (string.IsNullOrEmpty(cleanPartName))
+			if (string.IsNullOrEmpty(cleanPartName) && !string.IsNullOrEmpty(prePartName))
 			{
-				ParcelUnboxTracker trk = (boxGo != null) ? boxGo.GetComponent<ParcelUnboxTracker>() : null;
-				if (trk != null && !string.IsNullOrEmpty(trk.PartName))
-				{
-					cleanPartName = MatchAmisCatalogPart(trk.PartName);
-				}
-			}
-
-			if (string.IsNullOrEmpty(cleanPartName))
-			{
-				cleanPartName = MatchAmisCatalogPart(ExtractPartNameFromBox(boxName));
+				cleanPartName = MatchAmisCatalogPart(prePartName);
 			}
 
 			if (string.IsNullOrEmpty(cleanPartName) && lastOrderItems.Count > 0)
 			{
-				int validIdx = (itemIndex >= 0 && itemIndex < lastOrderItems.Count) ? itemIndex : 0;
+				int validIdx = (itemIndex >= 0 && itemIndex < lastOrderItems.Count) ? itemIndex : (unboxCounter % lastOrderItems.Count);
 				cleanPartName = MatchAmisCatalogPart(lastOrderItems[validIdx]);
 			}
 
@@ -2164,6 +2223,8 @@ namespace WreckMPExtendedSync
 			{
 				cleanPartName = "spoilers";
 			}
+
+			unboxCounter++;
 
 			if (itemIndex < 0 && lastOrderItems != null && lastOrderItems.Count > 0)
 			{
@@ -2428,43 +2489,90 @@ namespace WreckMPExtendedSync
 
 		private void DestroySpectatorBox(Vector3 unboxPos, string cleanPart, int itemIndex)
 		{
-			GameObject[] all = UnityEngine.Object.FindObjectsOfType<GameObject>();
-			for (int i = 0; i < all.Length; i++)
+			Collider[] nearby = Physics.OverlapSphere(unboxPos, 6f);
+			if (nearby == null) return;
+			for (int i = 0; i < nearby.Length; i++)
 			{
-				GameObject go = all[i];
+				Collider col = nearby[i];
+				if (col == null) continue;
+				GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.gameObject;
 				if (go == null) continue;
 
-				string name = go.name ?? "";
-				string rootName = (go.transform.root != null) ? (go.transform.root.name ?? "") : "";
+				GameObject box = GetParcelBoxRoot(go);
+				if (box == null) continue;
 
-				bool isCandidate = name.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                   name.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                   rootName.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                   rootName.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0;
-
-				if (!isCandidate) continue;
-				if (Vector3.Distance(go.transform.position, unboxPos) > 5f) continue;
-				
 				// Пометить как обработанную, чтобы watcher зрителя не счёл это своим открытием
-				ParcelUnboxTracker trk = go.GetComponent<ParcelUnboxTracker>();
+				ParcelUnboxTracker trk = box.GetComponent<ParcelUnboxTracker>();
 				if (trk != null)
 				{
 					trk.WasTriggered = true; // ключевое: глушим его собственный unbox-broadcast
 				}
-				
-				// Дёрнуть FSM, если игра умеет сама "открыть" — иначе просто скрыть
-				PlayMakerFSM fsm = go.GetComponentInChildren<PlayMakerFSM>();
+
+				suppressedParcels.Add(box.GetInstanceID()); // защита от echo
+				PlayMakerFSM fsm = box.GetComponentInChildren<PlayMakerFSM>();
 				if (fsm != null)
 				{
-					suppressedParcels.Add(go.GetInstanceID()); // защита от echo
 					fsm.SendEvent("OPEN");
 				}
 				else
 				{
-					go.SetActive(false);
+					box.SetActive(false);
 				}
-				ExtendedSyncDebugHUD.Log("[PARTS] Коробка зрителя закрыта по сетевому unbox: " + go.name);
+				UnityEngine.Object.Destroy(box, 0.1f);
+				ExtendedSyncDebugHUD.Log("[PARTS] Коробка зрителя закрыта по сетевому unbox: " + box.name);
 				break; // одну коробку за раз
+			}
+		}
+
+		public IEnumerator LazyRegisterExistingCatalogParts()
+		{
+			yield return new WaitForSeconds(3f);
+			if (Application.loadedLevelName != "GAME") yield break;
+			RegisterExistingCatalogParts();
+		}
+
+		public void RegisterExistingCatalogParts()
+		{
+			try
+			{
+				GameObject[] all = Resources.FindObjectsOfTypeAll<GameObject>();
+				if (all == null) return;
+				int registered = 0;
+				for (int i = 0; i < all.Length; i++)
+				{
+					GameObject go = all[i];
+					if (go == null || !go.activeInHierarchy) continue;
+					string name = go.name;
+					if (string.IsNullOrEmpty(name)) continue;
+					if (IsParcelBox(name)) continue;
+
+					string clean = UniversalHandItemSync.GetCleanItemName(name);
+					if (IsAmisCatalogPart(clean))
+					{
+						Rigidbody rb = go.GetComponent<Rigidbody>();
+						if (rb != null)
+						{
+							try
+							{
+								if (NetRigidbodyManager.GetRigidbodyHash(rb) == 0)
+								{
+									int netHash = ("msc_parcel_" + clean + "_0").GetHashFNV_1a();
+									NetRigidbodyManager.AddRigidbody(rb, netHash);
+									registered++;
+								}
+							}
+							catch {}
+						}
+					}
+				}
+				if (registered > 0)
+				{
+					FileLogger.WriteLine("RegisterExistingCatalogParts: registered " + registered + " existing catalog parts in NetRigidbodyManager", "INFO");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModConsole.Error("[NetPartsDeliverySync] RegisterExistingCatalogParts error: " + ex.Message);
 			}
 		}
 

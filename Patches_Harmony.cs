@@ -88,7 +88,10 @@ namespace WreckMPExtendedSync
 					}
 					else if (bcb.orderFsm != null && __instance == bcb.orderFsm && string.Equals(eventName, "FINISHED", StringComparison.OrdinalIgnoreCase))
 					{
-						BetterCheatBoxSyncManager.Instance.BroadcastSkip("POST_ORDER");
+						if (Time.time - BetterCheatBoxSyncManager.Instance.lastPostOrderSkipTime >= 2f)
+						{
+							BetterCheatBoxSyncManager.Instance.BroadcastSkip("POST_ORDER");
+						}
 					}
 				}
 			}
@@ -99,7 +102,8 @@ namespace WreckMPExtendedSync
 			}
 
 			Transform root = __instance.transform.root;
-			if (root == null || !IsMonitoredRoot(root))
+			bool isParcel = NetPartsDeliverySync.GetParcelBoxRoot(__instance.gameObject) != null;
+			if ((root == null || !IsMonitoredRoot(root)) && !isParcel)
 			{
 				return true;
 			}
@@ -149,30 +153,36 @@ namespace WreckMPExtendedSync
 					NetPartsDeliverySync.Instance.BroadcastOrderPlaced();
 				}
 			}
-			else if (NetPartsDeliverySync.IsParcelBox(goName) || NetPartsDeliverySync.IsParcelBox(fsmName) || (root != null && NetPartsDeliverySync.IsParcelBox(root.name)))
+			else
 			{
-				if (string.Equals(eventName, "OPEN", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "Assemble", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "Unbox", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "AssembleItems", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "ASSEMBLE", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "Spawn", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "Open", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "1", StringComparison.OrdinalIgnoreCase) ||
-					string.Equals(eventName, "State 2", StringComparison.OrdinalIgnoreCase))
+				GameObject boxGo = NetPartsDeliverySync.GetParcelBoxRoot(__instance.gameObject);
+				if (boxGo != null)
 				{
-					if (NetPartsDeliverySync.Instance != null &&
-						!NetPartsDeliverySync.Instance.IsNetworkApplying &&
-						!NetPartsDeliverySync.Instance.isSceneResetting)
+					if (string.Equals(eventName, "OPEN", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "Assemble", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "Unbox", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "AssembleItems", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "ASSEMBLE", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "Spawn", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "Open", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "1", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "State 2", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "USE", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "ACTIVATE", StringComparison.OrdinalIgnoreCase) ||
+						string.Equals(eventName, "Unpack", StringComparison.OrdinalIgnoreCase))
 					{
-						GameObject boxGo = __instance.gameObject;
-						if (!NetPartsDeliverySync.Instance.IsParcelSuppressed(boxGo.GetInstanceID()))
+						if (NetPartsDeliverySync.Instance != null &&
+							!NetPartsDeliverySync.Instance.IsNetworkApplying &&
+							!NetPartsDeliverySync.Instance.isSceneResetting)
 						{
-							ParcelUnboxTracker tracker = boxGo.GetComponent<ParcelUnboxTracker>() ?? boxGo.AddComponent<ParcelUnboxTracker>();
-							if (!tracker.WasTriggered)
+							if (!NetPartsDeliverySync.Instance.IsParcelSuppressed(boxGo.GetInstanceID()))
 							{
-								tracker.WasTriggered = true;
-								NetPartsDeliverySync.Instance.StartCoroutine(NetPartsDeliverySync.Instance.InitiatorUnboxCoroutine(boxGo.transform.position, boxGo, boxGo.name, tracker.ItemIndex));
+								ParcelUnboxTracker tracker = boxGo.GetComponent<ParcelUnboxTracker>() ?? boxGo.AddComponent<ParcelUnboxTracker>();
+								if (!tracker.WasTriggered)
+								{
+									tracker.WasTriggered = true;
+									NetPartsDeliverySync.Instance.StartCoroutine(NetPartsDeliverySync.Instance.InitiatorUnboxCoroutine(boxGo.transform.position, boxGo, boxGo.name, tracker.ItemIndex));
+								}
 							}
 						}
 					}
