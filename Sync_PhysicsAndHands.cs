@@ -45,6 +45,11 @@ namespace WreckMPExtendedSync
 		public void TriggerUnbox()
 		{
 			if (WasTriggered) return;
+			if (gameObject != null && gameObject.name.IndexOf("__HandVisual", StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				WasTriggered = true;
+				return;
+			}
 			WasTriggered = true;
 
 			if (NetPartsDeliverySync.Instance != null &&
@@ -386,6 +391,14 @@ namespace WreckMPExtendedSync
 				BetterCheatBoxSyncManager.ResetRigidbodyPhysicsAndClaim(gameObject);
 				BroadcastItemDropped(ItemId, pos, rot, vel);
 			}
+			else if (!isHeld && !wasHeldLocally && transform.parent == null)
+			{
+				if (rb != null && rb.isKinematic)
+				{
+					rb.isKinematic = false;
+					rb.WakeUp();
+				}
+			}
 		}
 
 		private bool CheckIsHeldLocally()
@@ -575,12 +588,14 @@ namespace WreckMPExtendedSync
 					{
 						item.rb.isKinematic = false;
 						item.rb.velocity = vel;
+						item.rb.WakeUp();
 					}
 					Collider[] cols = item.GetComponentsInChildren<Collider>(true);
 					for (int c = 0; c < cols.Length; c++)
 					{
 						if (cols[c] != null) cols[c].enabled = true;
 					}
+					BetterCheatBoxSyncManager.ResetRigidbodyPhysicsAndClaim(item.gameObject);
 					BetterCheatBoxSyncManager.UpdateNetRigidbodyCache(item.gameObject, pos, rot);
 					if (WreckMPGlobals.Players.TryGetValue(reader.sender, out var dropper) && dropper != null)
 					{
@@ -918,10 +933,15 @@ namespace WreckMPExtendedSync
 						}
 
 						visual.layer = 2;
+						visual.tag = "Untagged";
 						Transform[] allChilds = visual.GetComponentsInChildren<Transform>(true);
 						for (int j = 0; j < allChilds.Length; j++)
 						{
-							if (allChilds[j] != null) allChilds[j].gameObject.layer = 2;
+							if (allChilds[j] != null)
+							{
+								allChilds[j].gameObject.layer = 2;
+								allChilds[j].gameObject.tag = "Untagged";
+							}
 						}
 
 						visual.transform.parent = handRight;

@@ -608,12 +608,23 @@ namespace WreckMPExtendedSync
 					}
 					if (cachedEnvelope != null)
 					{
-						int partsLayer = LayerMask.NameToLayer("Parts");
-						int pLayer = (partsLayer != -1) ? partsLayer : 19;
-						cachedEnvelope.layer = pLayer;
+						int defaultLayer = LayerMask.NameToLayer("Default");
+						int dLayer = (defaultLayer != -1) ? defaultLayer : 0;
+						cachedEnvelope.layer = dLayer;
+						cachedEnvelope.tag = "ITEM";
 						foreach (Transform child in cachedEnvelope.GetComponentsInChildren<Transform>(true))
 						{
-							if (child != null) child.gameObject.layer = pLayer;
+							if (child != null)
+							{
+								child.gameObject.layer = dLayer;
+								child.gameObject.tag = "ITEM";
+							}
+						}
+						Rigidbody envRb = cachedEnvelope.GetComponent<Rigidbody>() ?? cachedEnvelope.GetComponentInChildren<Rigidbody>();
+						if (envRb != null)
+						{
+							if (envRb.isKinematic) envRb.isKinematic = false;
+							envRb.useGravity = true;
 						}
 						CheatSpawnedItemSync.AttachToSpawned(cachedEnvelope, "msc_shared_envelope");
 						PlayMakerFSM component = cachedEnvelope.GetComponent<PlayMakerFSM>();
@@ -796,12 +807,15 @@ namespace WreckMPExtendedSync
 			if (localEnv != null)
 			{
 				cachedEnvelope = localEnv;
-				int partsLayer = LayerMask.NameToLayer("Parts");
-				int pLayer = (partsLayer != -1) ? partsLayer : 19;
-				localEnv.layer = pLayer;
+				localEnv.tag = "ITEM";
+				localEnv.layer = 0;
 				foreach (Transform child in localEnv.GetComponentsInChildren<Transform>(true))
 				{
-					if (child != null) child.gameObject.layer = pLayer;
+					if (child != null)
+					{
+						child.gameObject.tag = "ITEM";
+						child.gameObject.layer = 0;
+					}
 				}
 				BoxCollider boxCol = localEnv.GetComponent<BoxCollider>() ?? localEnv.GetComponentInChildren<BoxCollider>();
 				if (boxCol == null)
@@ -827,6 +841,7 @@ namespace WreckMPExtendedSync
 				rb.isKinematic = false;
 				rb.mass = 0.2f;
 				rb.useGravity = true;
+				rb.WakeUp();
 
 				CheatSpawnedItemSync.AttachToSpawned(localEnv, "msc_shared_envelope");
 				BetterCheatBoxSyncManager.ResetRigidbodyPhysicsAndClaim(localEnv);
@@ -934,12 +949,15 @@ namespace WreckMPExtendedSync
 
 				if (env != null)
 				{
-					int partsLayer = LayerMask.NameToLayer("Parts");
-					int pLayer = (partsLayer != -1) ? partsLayer : 19;
-					env.layer = pLayer;
+					env.tag = "ITEM";
+					env.layer = 0;
 					foreach (Transform child in env.GetComponentsInChildren<Transform>(true))
 					{
-						if (child != null) child.gameObject.layer = pLayer;
+						if (child != null)
+						{
+							child.gameObject.tag = "ITEM";
+							child.gameObject.layer = 0;
+						}
 					}
 
 					foreach (var r in env.GetComponentsInChildren<Renderer>(true))
@@ -973,6 +991,7 @@ namespace WreckMPExtendedSync
 					rb.isKinematic = false;
 					rb.mass = 0.2f;
 					rb.useGravity = true;
+					rb.WakeUp();
 					rb.position = pos;
 					rb.rotation = rot;
 					rb.velocity = Vector3.zero;
@@ -989,7 +1008,7 @@ namespace WreckMPExtendedSync
 					env.SetActive(true);
 					cachedEnvelope = env;
 					CheatSpawnedItemSync.AttachToSpawned(env, "msc_shared_envelope");
-					BetterCheatBoxSyncManager.ResetRigidbodyPhysicsLocal(env);
+					BetterCheatBoxSyncManager.ResetRigidbodyPhysicsAndClaim(env);
 					BetterCheatBoxSyncManager.UpdateNetRigidbodyCache(env, pos, rot);
 
 					PlayMakerFSM component = cachedEnvelope.GetComponent<PlayMakerFSM>();
@@ -1775,9 +1794,32 @@ namespace WreckMPExtendedSync
 			return false;
 		}
 
+		// Слой и тег — от живого аналога (шаблона): он в игре подбирается, значит его слой/тег
+		// проходит пик-рейкаст MSC. Без аналога — Default + ITEM (интерактивные предметы MSC).
+		// Детей не трогаем: Instantiate уже копирует их слои/теги из живого шаблона.
+		public static void ApplyPickableAppearance(GameObject go, GameObject analog)
+		{
+			if (go == null) return;
+			int targetLayer;
+			if (analog != null)
+			{
+				targetLayer = analog.layer;
+				string analogTag = analog.tag;
+				if ((analogTag == "ITEM" || analogTag == "PART") && go.tag != analogTag) go.tag = analogTag;
+			}
+			else
+			{
+				targetLayer = LayerMask.NameToLayer("Default");
+				if (targetLayer == -1) targetLayer = 0;
+			}
+			go.layer = targetLayer;
+			if (go.tag != "ITEM" && go.tag != "PART") go.tag = "ITEM";
+		}
+
 		public static bool IsParcelBox(string name)
 		{
 			if (string.IsNullOrEmpty(name)) return false;
+			if (name.IndexOf("__HandVisual", StringComparison.OrdinalIgnoreCase) >= 0) return false;
 			if (IsProtectedSceneObject(name)) return false;
 			return name.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("parcel", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -1788,6 +1830,7 @@ namespace WreckMPExtendedSync
 		public static bool IsParcelBox(GameObject go)
 		{
 			if (go == null) return false;
+			if (go.name.IndexOf("__HandVisual", StringComparison.OrdinalIgnoreCase) >= 0) return false;
 			if (IsProtectedSceneObject(go)) return false;
 			return IsParcelBox(go.name);
 		}
@@ -1795,6 +1838,7 @@ namespace WreckMPExtendedSync
 		public static GameObject GetParcelBoxRoot(GameObject go)
 		{
 			if (go == null) return null;
+			if (go.name.IndexOf("__HandVisual", StringComparison.OrdinalIgnoreCase) >= 0) return null;
 			if (IsProtectedSceneObject(go)) return null;
 			if (IsParcelBox(go.name)) return go;
 
@@ -1803,6 +1847,7 @@ namespace WreckMPExtendedSync
 			while (cur != null && depth < 4)
 			{
 				string cName = cur.name ?? "";
+				if (cName.IndexOf("__HandVisual", StringComparison.OrdinalIgnoreCase) >= 0) return null;
 				if (IsProtectedSceneObject(cName))
 				{
 					return null;
@@ -2046,6 +2091,34 @@ namespace WreckMPExtendedSync
 			{
 				GameObject boxGo = candidates[c];
 				if (boxGo == null || IsProtectedSceneObject(boxGo) || !IsParcelBox(boxGo.name)) continue;
+
+				// Убеждаемся, что посылка имеет tag ITEM, layer Default и не-кинематический Rigidbody, чтобы хост мог её взять в руки
+				boxGo.tag = "ITEM";
+				int defaultLayer = LayerMask.NameToLayer("Default");
+				int dLayer = (defaultLayer != -1) ? defaultLayer : 0;
+				if (boxGo.layer != dLayer && boxGo.layer != 0)
+				{
+					boxGo.layer = dLayer;
+				}
+				Rigidbody boxRb = boxGo.GetComponent<Rigidbody>();
+				if (boxRb != null)
+				{
+					if (boxRb.isKinematic)
+					{
+						boxRb.isKinematic = false;
+						boxRb.useGravity = true;
+						boxRb.WakeUp();
+					}
+				}
+				Collider[] bCols = boxGo.GetComponentsInChildren<Collider>(true);
+				for (int i = 0; i < bCols.Length; i++)
+				{
+					if (bCols[i] != null && !bCols[i].enabled)
+					{
+						bCols[i].enabled = true;
+						bCols[i].isTrigger = false;
+					}
+				}
 
 				int instanceID = boxGo.GetInstanceID();
 				if (hookedParcels.Contains(instanceID)) continue;
@@ -2380,8 +2453,9 @@ namespace WreckMPExtendedSync
 					spawnedPart = (GameObject)UnityEngine.Object.Instantiate(template, pos, rot);
 					spawnedPart.name = cleanPartName + "(Clone)";
 					spawnedPart.SetActive(true);
-					int partsLayer = LayerMask.NameToLayer("Parts");
-					spawnedPart.layer = (partsLayer != -1) ? partsLayer : 19;
+					// Слой/тег живого аналога: шаблон пикабелен в игре по определению,
+					// а перебой слоя на "Parts" (16) делает деталь невидимой для пик-рейкаста.
+					ApplyPickableAppearance(spawnedPart, template);
 					foreach (var r in spawnedPart.GetComponentsInChildren<Renderer>(true))
 					{
 						if (r != null) r.enabled = true;
@@ -2392,6 +2466,24 @@ namespace WreckMPExtendedSync
 						{
 							c.enabled = true;
 							c.isTrigger = false;
+						}
+					}
+					if (spawnedPart.GetComponentInChildren<Collider>() == null)
+					{
+						Renderer srcRend = spawnedPart.GetComponentInChildren<Renderer>();
+						if (srcRend != null)
+						{
+							BoxCollider fab = spawnedPart.AddComponent<BoxCollider>();
+							Vector3 ls = spawnedPart.transform.lossyScale;
+							fab.size = new Vector3(
+								Mathf.Abs(ls.x) > 0.0001f ? srcRend.bounds.size.x / Mathf.Abs(ls.x) : srcRend.bounds.size.x,
+								Mathf.Abs(ls.y) > 0.0001f ? srcRend.bounds.size.y / Mathf.Abs(ls.y) : srcRend.bounds.size.y,
+								Mathf.Abs(ls.z) > 0.0001f ? srcRend.bounds.size.z / Mathf.Abs(ls.z) : srcRend.bounds.size.z);
+							fab.center = spawnedPart.transform.InverseTransformPoint(srcRend.bounds.center);
+						}
+						else
+						{
+							ExtendedSyncDebugHUD.Log("<color=#ffaa00>WARN [AMIS AUTO]: у детали " + cleanPartName + " нет ни коллайдера, ни рендерера — в руки не взять!</color>");
 						}
 					}
 					ExtendedSyncDebugHUD.Log("<color=#33ff33>[AMIS AUTO]</color> Деталь материализована: " + spawnedPart.name + " на " + pos.ToString("F1"));

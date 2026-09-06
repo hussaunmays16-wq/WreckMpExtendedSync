@@ -7,7 +7,7 @@
 - **Репо:** https://github.com/hussaunmays16-wq/WreckMpExtendedSync (public)
 - **Локально:** `C:\Dev\WreckMPExtendedSync\` (git, теги v3.7.0…v3.10.1)
 - **Стек:** C# / .NET 3.5 / Unity 5.0 / MSCLoader / Harmony 1.2 / PlayMaker (игра вся на FSM)
-- **Текущая версия:** v3.10.1
+- **Текущая версия:** v3.10.2
 - **Файлы:** `BetterCheatBox_Core.cs` (~4000 строк), `Sync_CatalogAndPostal.cs` (~2400), `Sync_PhysicsAndHands.cs` (~1039), `Sync_Vehicles.cs` (Jonnez+каркас), `Patches_Harmony.cs` (~390)
 - **Тестовая среда:** два инстанса игры на одной машине (хост Steam `...\steamapps\common\My Summer Car\`, клиент `C:\Games\MSC_Instance2\`), Steam-эмулятор (Goldberg), деплой DLL в оба `Mods\`.
 - **Сборка:** `dotnet build -c Release` → `bin\Release\net35\WreckMPExtendedSync.dll`.
@@ -142,3 +142,16 @@ Unbox:    нативная коробка инициатора → ParcelUnboxTr
   - `GetParcelBoxRoot` немедленно прерывает поиск и возвращает `null` при столкновении с любым защищённым объектом или если объект не является посылкой.
   - Из `ScanAndHookParcels` удалён опасный проход по FSM внутри `STORE`; сканирование коробок ведётся строго по физическому радиусу и прямым именам посылок.
   - В `HandleCatalogPartUnbox`, `DestroySpectatorBox`, `InitiatorUnboxCoroutine` и `SendEvent_Prefix` установлена тройная защита: ни при каких обстоятельствах защищённые объекты сцены не могут быть удалены, деактивированы или распознаны как посылка.
+
+---
+
+### Статус v3.10.2:
+- **Пикабельность материализованных деталей (продолжение незавершённой работы):** деталь проходила по логам (RX CatalogUnbox), но не бралась в руки.
+  - Установлено по TagManager (mainData): в MSC слой `Parts` = 16, а 19 = `Collider2`. Прежний код `HandleCatalogPartUnbox` перебивал слой клона на `Parts`(16)/19 ПОСЛЕ Instantiate — даже корректный шаблон терял пикабельный слой корня.
+  - `HandleCatalogPartUnbox`: перебой слоя удалён; новый `ApplyPickableAppearance(go, analog)` берёт слой (и тег ITEM/PART, если есть) с живого шаблона-аналога — он пикабелен в игре по определению. Fallback без аналога: слой `Default`(0) + тег `ITEM`. Слои детей не трогаются (Instantiate уже копирует их из живого шаблона).
+  - Если у материализованной детали не нашлось ни одного коллайдера — фабрикуется BoxCollider по bounds рендерера (иначе физически не поднять).
+  - Конверты (3 пути) и посылки в `ScanAndHookParcels`: слой `Default`(0) + тег `ITEM` + не-кинематический RB + WakeUp + коллайдеры включены/не-триггеры (правка предшественницы, проверена и сохранена).
+  - Задача «регистрация для захвата» уже была в коде: `AddRigidbody(rb, ("msc_parcel_"+part+"_"+idx).GetHashFNV_1a())` при hash==0; владение у получателя НЕ запрашивается (`ResetRigidbodyPhysicsLocal`).
+  - **Гейт оплаты ОТКАТЕН** (метод `IsOrderPaymentPending` + 4 места вызова): нарушал запрет «не менять логику unbox/оплаты», имена состояний FSM (Pay/Create/Done) не были подтверждены — при промахе блокировал распаковку «жёлтой надписью» (ровно задокументированный симптом).
+  - Сохранены guards `__HandVisual` (исключение визуала руки из parcel-детекции, визуалу руки — слой 2/Untagged), watchdog разморозки kinematic-предметов, WakeUp+AndClaim на RX drop.
+  - Сборка 0/0; деплой в оба Mods; критерий прогона: инициатор открывает коробку → зритель ПОДНИМАЕТ деталь в руки.
