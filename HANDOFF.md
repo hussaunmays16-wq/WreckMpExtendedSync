@@ -5,9 +5,9 @@
 Мод для My Summer Car (MSC), расширяющий кооп-мультиплеер WreckMP. Автосинхронизация того, что WreckMP сам не синкает: почта/заказы деталей Теймо, спавн-предметы из чит-бокса, предметы в руках, общий кошелёк, сюжетные деньги (Jouko/килью/Паятсо), телефон/вилка/фонарик, пассажир на мопеде Jonnez (клавиша U).
 
 - **Репо:** https://github.com/hussaunmays16-wq/WreckMpExtendedSync (public)
-- **Локально:** `C:\Dev\WreckMPExtendedSync\` (git, теги v3.7.0…v3.10.0)
+- **Локально:** `C:\Dev\WreckMPExtendedSync\` (git, теги v3.7.0…v3.10.1)
 - **Стек:** C# / .NET 3.5 / Unity 5.0 / MSCLoader / Harmony 1.2 / PlayMaker (игра вся на FSM)
-- **Текущая версия:** v3.10.0
+- **Текущая версия:** v3.10.1
 - **Файлы:** `BetterCheatBox_Core.cs` (~4000 строк), `Sync_CatalogAndPostal.cs` (~2400), `Sync_PhysicsAndHands.cs` (~1039), `Sync_Vehicles.cs` (Jonnez+каркас), `Patches_Harmony.cs` (~390)
 - **Тестовая среда:** два инстанса игры на одной машине (хост Steam `...\steamapps\common\My Summer Car\`, клиент `C:\Games\MSC_Instance2\`), Steam-эмулятор (Goldberg), деплой DLL в оба `Mods\`.
 - **Сборка:** `dotnet build -c Release` → `bin\Release\net35\WreckMPExtendedSync.dll`.
@@ -131,3 +131,14 @@ Unbox:    нативная коробка инициатора → ParcelUnboxTr
   - Телефон/фонарик: динамические имена состояний передаются в `SafeFsmWatcher`.
   - Конверт заказа: явный сброс Rigidbody `pos`/`rot`/скоростей.
 - **П.7 (Сейв/Лоад):** Исправлен `SceneLifecycleCoordinator.OnLevelWasLoaded` (снят блокирующий `loadedLevelName != lastScene`, препятствовавший ре-хуку при перезагрузке той же сцены GAME); добавлен `LazyRegisterExistingCatalogParts` для сохранения физической синхронизации деталей в WreckMP после загрузки сохранения.
+
+---
+
+### Статус v3.10.1:
+- **КРИТИЧЕСКИЙ ФИКС: магазин Теймо (STORE) и объекты сцены полностью защищены от удаления:**
+  - В v3.10.0 эвристика `IsParcelBox(GameObject go)` искала любые FSM с действиями `CreateObject`/`SpawnObject`, из-за чего здание `STORE` (кофейный аппарат, слот-машина, касса) ошибочно распознавалось как посылка. При распаковке любых деталей `DestroySpectatorBox` и `HandleCatalogPartUnbox` вызывали `Destroy(STORE)`.
+  - В v3.10.1 внедрён жёсткий блэклист `IsProtectedSceneObject` (`STORE`, `PERAJARVI`, `LOD`, `YARD`, `PLAYER`, `SATSUMA`, `Boxes`, `Pivot`, `Advert`, `Register`, `PostOffice`, `PostOrderBuy`, `envelope`, `Mailbox` и др.).
+  - `IsParcelBox` очищен от FSM-эвристики: посылками признаются исключительно объекты с именами `package`, `parcel`, `amis auto`, `amis-auto`.
+  - `GetParcelBoxRoot` немедленно прерывает поиск и возвращает `null` при столкновении с любым защищённым объектом или если объект не является посылкой.
+  - Из `ScanAndHookParcels` удалён опасный проход по FSM внутри `STORE`; сканирование коробок ведётся строго по физическому радиусу и прямым именам посылок.
+  - В `HandleCatalogPartUnbox`, `DestroySpectatorBox`, `InitiatorUnboxCoroutine` и `SendEvent_Prefix` установлена тройная защита: ни при каких обстоятельствах защищённые объекты сцены не могут быть удалены, деактивированы или распознаны как посылка.

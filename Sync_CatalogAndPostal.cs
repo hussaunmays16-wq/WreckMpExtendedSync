@@ -1734,83 +1734,87 @@ namespace WreckMPExtendedSync
 		}
 
 
+		public static bool IsProtectedSceneObject(string name)
+		{
+			if (string.IsNullOrEmpty(name)) return false;
+			return name.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("PERAJARVI", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("LOD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("YARD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("PLAYER", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("SATSUMA", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("HAYOSIKO", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("RUSCKO", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("FERNDALE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("GIFU", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("JONNEZ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("KEKMET", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("FLATBED", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Boxes", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Pivot", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Advert", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("PostOffice", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Mailbox", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Teimo", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Pub", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Fuel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("Pump", StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
+		public static bool IsProtectedSceneObject(GameObject go)
+		{
+			if (go == null) return false;
+			if (IsProtectedSceneObject(go.name)) return true;
+			if (go.transform.root != null && go.transform.root != go.transform && IsProtectedSceneObject(go.transform.root.name))
+			{
+				return true;
+			}
+			return false;
+		}
+
 		public static bool IsParcelBox(string name)
 		{
 			if (string.IsNullOrEmpty(name)) return false;
-			if (name.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			    name.IndexOf("PostOffice", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			    name.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			    name.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			    name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
-			{
-				return false;
-			}
+			if (IsProtectedSceneObject(name)) return false;
 			return name.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("parcel", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("amis", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("post ", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("post_", StringComparison.OrdinalIgnoreCase) >= 0;
+			       name.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			       name.IndexOf("amis-auto", StringComparison.OrdinalIgnoreCase) >= 0;
 		}
 
 		public static bool IsParcelBox(GameObject go)
 		{
 			if (go == null) return false;
-			if (IsParcelBox(go.name)) return true;
-			if (go.transform.root != null && IsParcelBox(go.transform.root.name)) return true;
-
-			try
-			{
-				PlayMakerFSM[] fsms = go.GetComponentsInChildren<PlayMakerFSM>(true);
-				if (fsms != null)
-				{
-					for (int i = 0; i < fsms.Length; i++)
-					{
-						var fsm = fsms[i];
-						if (fsm == null || fsm.FsmStates == null) continue;
-						for (int s = 0; s < fsm.FsmStates.Length; s++)
-						{
-							var state = fsm.FsmStates[s];
-							if (state == null || state.Actions == null) continue;
-							for (int a = 0; a < state.Actions.Length; a++)
-							{
-								var action = state.Actions[a];
-								if (action == null) continue;
-								string typeName = action.GetType().Name;
-								if (typeName == "CreateObject" || typeName == "SpawnObject")
-								{
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				ModConsole.Error("[WreckMP ExtendedSync Error]: " + ex.Message);
-			}
-			return false;
+			if (IsProtectedSceneObject(go)) return false;
+			return IsParcelBox(go.name);
 		}
 
 		public static GameObject GetParcelBoxRoot(GameObject go)
 		{
 			if (go == null) return null;
-			Transform cur = go.transform;
-			GameObject bestBox = null;
-			while (cur != null)
+			if (IsProtectedSceneObject(go)) return null;
+			if (IsParcelBox(go.name)) return go;
+
+			Transform cur = go.transform.parent;
+			int depth = 0;
+			while (cur != null && depth < 4)
 			{
 				string cName = cur.name ?? "";
-				if (cName.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 6) break;
-				if (cName.IndexOf("PLAYER", StringComparison.OrdinalIgnoreCase) >= 0) break;
-				if (cName.IndexOf("YARD", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 5) break;
-				if (cName.IndexOf("SATSUMA", StringComparison.OrdinalIgnoreCase) >= 0 && cName.Length <= 8) break;
-				if (IsParcelBox(cName) || IsParcelBox(cur.gameObject))
+				if (IsProtectedSceneObject(cName))
 				{
-					bestBox = cur.gameObject;
+					return null;
+				}
+				if (IsParcelBox(cName))
+				{
+					return cur.gameObject;
 				}
 				cur = cur.parent;
+				depth++;
 			}
-			return bestBox ?? (IsParcelBox(go) ? go : null);
+			return null;
 		}
 
 		public static string FindSpawnedPartNameFromFsm(GameObject box)
@@ -1999,28 +2003,26 @@ namespace WreckMPExtendedSync
 					if (go == null) continue;
 
 					GameObject boxObj = GetParcelBoxRoot(go);
-					if (boxObj != null && !candidates.Contains(boxObj))
+					if (boxObj != null && IsParcelBox(boxObj.name) && !IsProtectedSceneObject(boxObj) && !candidates.Contains(boxObj))
 					{
 						candidates.Add(boxObj);
 					}
 				}
 			}
 
-			// 2. Поиск по иерархии STORE (на случай ещё не активированных коллайдеров)
-			GameObject store = GameObject.Find("STORE");
-			if (store != null)
+			// 2. Поиск свободных посылок в сцене вокруг магазина
+			GameObject[] all = UnityEngine.Object.FindObjectsOfType<GameObject>();
+			if (all != null)
 			{
-				PlayMakerFSM[] storeFsms = store.GetComponentsInChildren<PlayMakerFSM>(true);
-				if (storeFsms != null)
+				for (int i = 0; i < all.Length; i++)
 				{
-					for (int j = 0; j < storeFsms.Length; j++)
+					GameObject obj = all[i];
+					if (obj == null || IsProtectedSceneObject(obj)) continue;
+					if (IsParcelBox(obj.name) && !candidates.Contains(obj))
 					{
-						PlayMakerFSM f = storeFsms[j];
-						if (f == null || f.gameObject == null) continue;
-						GameObject boxObj = GetParcelBoxRoot(f.gameObject);
-						if (boxObj != null && !candidates.Contains(boxObj))
+						if (Vector3.Distance(obj.transform.position, storePos) < 40f)
 						{
-							candidates.Add(boxObj);
+							candidates.Add(obj);
 						}
 					}
 				}
@@ -2031,7 +2033,7 @@ namespace WreckMPExtendedSync
 			for (int c = 0; c < candidates.Count; c++)
 			{
 				GameObject boxGo = candidates[c];
-				if (boxGo == null) continue;
+				if (boxGo == null || IsProtectedSceneObject(boxGo) || !IsParcelBox(boxGo.name)) continue;
 				ParcelUnboxTracker existingTracker = boxGo.GetComponent<ParcelUnboxTracker>();
 				if (existingTracker != null && existingTracker.ItemIndex >= 0)
 				{
@@ -2043,7 +2045,7 @@ namespace WreckMPExtendedSync
 			for (int c = 0; c < candidates.Count; c++)
 			{
 				GameObject boxGo = candidates[c];
-				if (boxGo == null) continue;
+				if (boxGo == null || IsProtectedSceneObject(boxGo) || !IsParcelBox(boxGo.name)) continue;
 
 				int instanceID = boxGo.GetInstanceID();
 				if (hookedParcels.Contains(instanceID)) continue;
@@ -2128,6 +2130,15 @@ namespace WreckMPExtendedSync
 
 		public IEnumerator InitiatorUnboxCoroutine(Vector3 boxPos, GameObject boxGo, string boxName, int itemIndex = -1)
 		{
+			if (string.IsNullOrEmpty(boxName) || !IsParcelBox(boxName) || IsProtectedSceneObject(boxName))
+			{
+				yield break;
+			}
+			if (boxGo != null && (IsProtectedSceneObject(boxGo) || !IsParcelBox(boxGo.name)))
+			{
+				yield break;
+			}
+
 			// Извлекаем все данные ДО ожидания, пока GameObject коробки ещё не уничтожен игрой!
 			string prePartName = "";
 			ParcelUnboxTracker trk = null;
@@ -2182,13 +2193,7 @@ namespace WreckMPExtendedSync
 					string rootN = (go.transform.root != null) ? go.transform.root.name : "";
 
 					// Strictly ignore player, store, yard, envelope, satsuma, car tracking, fenders, parcel boxes
-					if (n.IndexOf("PLAYER", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						rootN.IndexOf("PLAYER", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						n.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						n.IndexOf("YARD", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						n.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						n.IndexOf("SATSUMA", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						rootN.IndexOf("SATSUMA", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					if (IsProtectedSceneObject(n) || IsProtectedSceneObject(rootN) ||
 						n.IndexOf("CarTracking", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						n.IndexOf("fender", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						n.IndexOf("drive1", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -2199,7 +2204,7 @@ namespace WreckMPExtendedSync
 					}
 
 					string candName = UniversalHandItemSync.GetCleanItemName(n);
-					if (IsAmisCatalogPart(candName) || (!string.IsNullOrEmpty(cleanPartName) && candName.IndexOf(cleanPartName, StringComparison.OrdinalIgnoreCase) >= 0))
+					if (IsAmisCatalogPart(candName))
 					{
 						foundPart = go;
 						cleanPartName = MatchAmisCatalogPart(candName);
@@ -2434,30 +2439,30 @@ namespace WreckMPExtendedSync
 					GameObject go = (c.attachedRigidbody != null) ? c.attachedRigidbody.gameObject : c.gameObject;
 					if (go == null) continue;
 
-					string n = go.name;
-					string rootN = (go.transform.root != null) ? go.transform.root.name : "";
-					if (IsParcelBox(n) || IsParcelBox(rootN) || IsParcelBox(go) || (go.transform.root != null && IsParcelBox(go.transform.root.gameObject)))
+					GameObject box = GetParcelBoxRoot(go);
+					if (box == null || !IsParcelBox(box.name) || IsProtectedSceneObject(box))
 					{
-						GameObject box = (go.transform.root != null && (IsParcelBox(rootN) || IsParcelBox(go.transform.root.gameObject))) ? go.transform.root.gameObject : go;
-						suppressedParcels.Add(box.GetInstanceID());
-						ParcelUnboxTracker tracker = box.GetComponent<ParcelUnboxTracker>();
-						if (tracker != null)
-						{
-							tracker.WasTriggered = true;
-						}
-						foreach (var r in box.GetComponentsInChildren<Renderer>(true))
-						{
-							if (r != null) r.enabled = false;
-						}
-						foreach (var col in box.GetComponentsInChildren<Collider>(true))
-						{
-							if (col != null) col.enabled = false;
-						}
-						box.SetActive(false);
-						UnityEngine.Object.Destroy(box, 0.1f);
-						ExtendedSyncDebugHUD.Log("<color=#33ff33>[AMIS AUTO]</color> Пустая коробка " + box.name + " удалена у напарника.");
-						break;
+						continue;
 					}
+
+					suppressedParcels.Add(box.GetInstanceID());
+					ParcelUnboxTracker tracker = box.GetComponent<ParcelUnboxTracker>();
+					if (tracker != null)
+					{
+						tracker.WasTriggered = true;
+					}
+					foreach (var r in box.GetComponentsInChildren<Renderer>(true))
+					{
+						if (r != null) r.enabled = false;
+					}
+					foreach (var col in box.GetComponentsInChildren<Collider>(true))
+					{
+						if (col != null) col.enabled = false;
+					}
+					box.SetActive(false);
+					UnityEngine.Object.Destroy(box, 0.1f);
+					ExtendedSyncDebugHUD.Log("<color=#33ff33>[AMIS AUTO]</color> Пустая коробка " + box.name + " удалена у напарника.");
+					break;
 				}
 			}
 		}
@@ -2499,7 +2504,7 @@ namespace WreckMPExtendedSync
 				if (go == null) continue;
 
 				GameObject box = GetParcelBoxRoot(go);
-				if (box == null) continue;
+				if (box == null || !IsParcelBox(box.name) || IsProtectedSceneObject(box)) continue;
 
 				// Пометить как обработанную, чтобы watcher зрителя не счёл это своим открытием
 				ParcelUnboxTracker trk = box.GetComponent<ParcelUnboxTracker>();
@@ -2544,7 +2549,7 @@ namespace WreckMPExtendedSync
 					if (go == null || !go.activeInHierarchy) continue;
 					string name = go.name;
 					if (string.IsNullOrEmpty(name)) continue;
-					if (IsParcelBox(name)) continue;
+					if (IsParcelBox(name) || IsProtectedSceneObject(go)) continue;
 
 					string clean = UniversalHandItemSync.GetCleanItemName(name);
 					if (IsAmisCatalogPart(clean))

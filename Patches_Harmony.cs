@@ -156,7 +156,7 @@ namespace WreckMPExtendedSync
 			else
 			{
 				GameObject boxGo = NetPartsDeliverySync.GetParcelBoxRoot(__instance.gameObject);
-				if (boxGo != null)
+				if (boxGo != null && NetPartsDeliverySync.IsParcelBox(boxGo.name) && !NetPartsDeliverySync.IsProtectedSceneObject(boxGo))
 				{
 					if (string.Equals(eventName, "OPEN", StringComparison.OrdinalIgnoreCase) ||
 						string.Equals(eventName, "Assemble", StringComparison.OrdinalIgnoreCase) ||
