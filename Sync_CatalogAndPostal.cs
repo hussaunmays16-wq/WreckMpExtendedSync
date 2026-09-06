@@ -1346,16 +1346,44 @@ namespace WreckMPExtendedSync
 			deliveryArrivedSent = true;
 			postOrderBuyWasActive = true;
 			RestorePostOrderBuyVisuals();
-			using GameEventWriter gameEventWriter = deliveryArrivedEvent.Writer();
-			gameEventWriter.Write(value: true);
-			deliveryArrivedEvent.Send(gameEventWriter, 0uL, safe: true);
+			StartCoroutine(RegisterUnpackedBoxesCoroutine(new Vector3(-1551.5f, 4.5f, 1182.8f), isPayer: false));
+			FileLogger.WriteLine("TX DeliveryReady: activating receipt + boxes hook", "INFO");
+
+			float curPrice = 0f;
+			PlayMakerFSM payFsm = cachedPostOrderPayFsm;
+			if (payFsm == null) FindPostOrderBuy(out payFsm);
+			if (payFsm != null && payFsm.FsmVariables != null)
+			{
+				FsmFloat fPrice = payFsm.FsmVariables.FindFsmFloat("Price") ??
+				                  payFsm.FsmVariables.FindFsmFloat("Total") ??
+				                  payFsm.FsmVariables.FindFsmFloat("Cost");
+				if (fPrice != null && fPrice.Value > 0f) curPrice = fPrice.Value;
+			}
+
+			using (GameEventWriter gameEventWriter = deliveryArrivedEvent.Writer())
+			{
+				gameEventWriter.Write(value: true);
+				gameEventWriter.Write(curPrice);
+				deliveryArrivedEvent.Send(gameEventWriter, 0uL, safe: true);
+			}
 			ExtendedSyncDebugHUD.Log("<color=#33ff33>OUT [PARTS]: Посылки прибыли в магазин Теймо!</color>");
 		}
 
 		private void OnReceiveDeliveryArrived(GameEventReader reader)
 		{
 			reader.ReadBoolean();
+			float deliveredPrice = 0f;
+			try
+			{
+				if (reader.BaseStream.Length - reader.BaseStream.Position >= 4)
+				{
+					deliveredPrice = reader.ReadSingle();
+				}
+			}
+			catch {}
+
 			ExtendedSyncDebugHUD.Log("<color=#33ff33>IN [PARTS]: Заказ деталей доставлен! Теймо ждёт на кассе.</color>");
+			FileLogger.WriteLine("RX DeliveryArrived: activating receipt + boxes hook (price=" + deliveredPrice + ")", "INFO");
 			isNetworkApplying = true;
 			try
 			{
@@ -1389,6 +1417,24 @@ namespace WreckMPExtendedSync
 					}
 				}
 				RestorePostOrderBuyVisuals();
+
+				PlayMakerFSM payFsm;
+				GameObject postOrderBuyObj = FindPostOrderBuy(out payFsm);
+				if (payFsm != null && payFsm.FsmVariables != null)
+				{
+					FsmFloat fPrice = payFsm.FsmVariables.FindFsmFloat("Price");
+					FsmFloat fTotal = payFsm.FsmVariables.FindFsmFloat("Total");
+					FsmFloat fCost = payFsm.FsmVariables.FindFsmFloat("Cost");
+
+					if (deliveredPrice > 0f)
+					{
+						if (fPrice != null) fPrice.Value = deliveredPrice;
+						if (fTotal != null) fTotal.Value = deliveredPrice;
+						if (fCost != null) fCost.Value = deliveredPrice;
+					}
+				}
+
+				StartCoroutine(RegisterUnpackedBoxesCoroutine(new Vector3(-1551.5f, 4.5f, 1182.8f), isPayer: false));
 			}
 			finally
 			{
@@ -1420,14 +1466,17 @@ namespace WreckMPExtendedSync
 			}
 
 			float billPrice = 0f;
-			if (cachedPostOrderPayFsm != null && cachedPostOrderPayFsm.FsmVariables != null)
+			PlayMakerFSM payFsm = cachedPostOrderPayFsm;
+			if (payFsm == null) FindPostOrderBuy(out payFsm);
+			if (payFsm != null && payFsm.FsmVariables != null)
 			{
-				FsmFloat fPrice = cachedPostOrderPayFsm.FsmVariables.FindFsmFloat("Price") ??
-				                  cachedPostOrderPayFsm.FsmVariables.FindFsmFloat("Total") ??
-				                  cachedPostOrderPayFsm.FsmVariables.FindFsmFloat("Cost");
-				if (fPrice != null) billPrice = fPrice.Value;
+				FsmFloat fPrice = payFsm.FsmVariables.FindFsmFloat("Price") ??
+				                  payFsm.FsmVariables.FindFsmFloat("Total") ??
+				                  payFsm.FsmVariables.FindFsmFloat("Cost");
+				if (fPrice != null && fPrice.Value > 0f) billPrice = fPrice.Value;
 			}
 
+			FileLogger.WriteLine("TX PostOrderPay: billPrice=" + billPrice + " items=" + lastOrderItems.Count, "INFO");
 			using (GameEventWriter gameEventWriter = postOrderPayEvent.Writer())
 			{
 				gameEventWriter.Write(WreckMPGlobals.UserID);
@@ -1482,6 +1531,7 @@ namespace WreckMPExtendedSync
 			}
 
 			ExtendedSyncDebugHUD.Log("<color=#33ff33>IN [PARTS]: Напарник оплатил посылки (" + (items.Count > 0 ? items.Count.ToString() : lastOrderItems.Count.ToString()) + " дет.)! Выдача коробок...</color>");
+			FileLogger.WriteLine("RX PostOrderPay: billPrice=" + billPrice + " items=" + (items.Count > 0 ? items.Count : lastOrderItems.Count), "INFO");
 			isNetworkApplying = true;
 			try
 			{
@@ -1525,6 +1575,16 @@ namespace WreckMPExtendedSync
 
 				PlayMakerFSM payFsm;
 				GameObject postOrderBuyObj = FindPostOrderBuy(out payFsm);
+				if (payFsm != null && payFsm.FsmVariables != null && billPrice > 0f)
+				{
+					FsmFloat fPrice = payFsm.FsmVariables.FindFsmFloat("Price");
+					if (fPrice != null) fPrice.Value = billPrice;
+					FsmFloat fTotal = payFsm.FsmVariables.FindFsmFloat("Total");
+					if (fTotal != null) fTotal.Value = billPrice;
+					FsmFloat fCost = payFsm.FsmVariables.FindFsmFloat("Cost");
+					if (fCost != null) fCost.Value = billPrice;
+				}
+
 				if (payFsm != null)
 				{
 					payFsm.SendEvent("PAID");
@@ -1834,7 +1894,12 @@ namespace WreckMPExtendedSync
 			}
 		}
 
-		private IEnumerator RegisterUnpackedBoxesCoroutine(Vector3 pos, bool isPayer)
+		public void StartRegisterBoxes(Vector3 pos, bool isPayer = false)
+		{
+			StartCoroutine(RegisterUnpackedBoxesCoroutine(pos, isPayer));
+		}
+
+		public IEnumerator RegisterUnpackedBoxesCoroutine(Vector3 pos, bool isPayer)
 		{
 			yield return new WaitForSeconds(0.4f);
 			ScanAndHookParcels();
