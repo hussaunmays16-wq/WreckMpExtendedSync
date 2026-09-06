@@ -493,14 +493,20 @@ namespace WreckMPExtendedSync
 								}
 								else if (proxy2.arrayList.Count > 0)
 								{
-									lastOrderItems.Clear();
+									List<string> valid = new List<string>();
 									for (int l = 0; l < proxy2.arrayList.Count; l++)
 									{
 										object obj = proxy2.arrayList[l];
 										if (obj != null)
 										{
-											lastOrderItems.Add(obj.ToString());
+											string s = obj.ToString().Trim();
+											if (!string.IsNullOrEmpty(s)) valid.Add(s);
 										}
+									}
+									if (valid.Count > 0)
+									{
+										lastOrderItems.Clear();
+										lastOrderItems.AddRange(valid);
 									}
 								}
 							}
@@ -534,20 +540,26 @@ namespace WreckMPExtendedSync
 					{
 						if (activeOrderList.arrayList.Count > 0)
 						{
-							lastOrderItems.Clear();
+							List<string> valid = new List<string>();
 							foreach (object array in activeOrderList.arrayList)
 							{
 								if (array != null)
 								{
-									lastOrderItems.Add(array.ToString());
+									string s = array.ToString().Trim();
+									if (!string.IsNullOrEmpty(s)) valid.Add(s);
 								}
+							}
+							if (valid.Count > 0)
+							{
+								lastOrderItems.Clear();
+								lastOrderItems.AddRange(valid);
 							}
 						}
 						else if (lastOrderItems.Count > 0 && !postOrderPaidSent)
 						{
 							foreach (string item in lastOrderItems)
 							{
-								if (!activeOrderList.arrayList.Contains(item))
+								if (!string.IsNullOrEmpty(item) && !activeOrderList.arrayList.Contains(item))
 								{
 									activeOrderList.arrayList.Add(item);
 								}
@@ -757,7 +769,8 @@ namespace WreckMPExtendedSync
 				{
 					if (array != null)
 					{
-						list.Add(array.ToString());
+						string s = array.ToString().Trim();
+						if (!string.IsNullOrEmpty(s)) list.Add(s);
 					}
 				}
 			}
@@ -765,6 +778,7 @@ namespace WreckMPExtendedSync
 			{
 				list.AddRange(lastOrderItems);
 			}
+			list.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
 			if (list.Count > 0)
 			{
 				lastOrderItems.Clear();
@@ -1028,7 +1042,8 @@ namespace WreckMPExtendedSync
 				{
 					if (obj != null)
 					{
-						list.Add(obj.ToString());
+						string s = obj.ToString().Trim();
+						if (!string.IsNullOrEmpty(s)) list.Add(s);
 					}
 				}
 			}
@@ -1036,6 +1051,7 @@ namespace WreckMPExtendedSync
 			{
 				list.AddRange(lastOrderItems);
 			}
+			list.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
 			if (list.Count > 0)
 			{
 				lastOrderItems.Clear();
@@ -1354,19 +1370,31 @@ namespace WreckMPExtendedSync
 			PlayMakerArrayListProxy proxy = cachedOrderList ?? FindOrderList();
 			if (proxy != null && proxy.arrayList != null && proxy.arrayList.Count > 0)
 			{
-				lastOrderItems.Clear();
+				List<string> proxyItems = new List<string>();
 				for (int i = 0; i < proxy.arrayList.Count; i++)
 				{
 					object obj = proxy.arrayList[i];
-					if (obj != null) lastOrderItems.Add(obj.ToString());
+					if (obj != null)
+					{
+						string s = obj.ToString().Trim();
+						if (!string.IsNullOrEmpty(s))
+						{
+							proxyItems.Add(s);
+						}
+					}
+				}
+				if (proxyItems.Count > 0)
+				{
+					lastOrderItems.Clear();
+					lastOrderItems.AddRange(proxyItems);
 				}
 			}
+			lastOrderItems.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
 
 			RestorePostOrderBuyVisuals();
 			Vector3 storePos = new Vector3(-1551.5f, 4.5f, 1182.8f);
-			SpawnMissingOrderBoxes(storePos);
 			StartCoroutine(RegisterUnpackedBoxesCoroutine(storePos, isPayer: false));
-			FileLogger.WriteLine("TX DeliveryReady: activating receipt + boxes hook", "INFO");
+			FileLogger.WriteLine("TX DeliveryReady: activating receipt + boxes hook (" + lastOrderItems.Count + " items: " + string.Join(", ", lastOrderItems.ToArray()) + ")", "INFO");
 
 			float curPrice = -1f;
 			PlayMakerFSM payFsm = cachedPostOrderPayFsm;
@@ -1386,7 +1414,7 @@ namespace WreckMPExtendedSync
 				gameEventWriter.Write(lastOrderItems.Count);
 				for (int j = 0; j < lastOrderItems.Count; j++)
 				{
-					gameEventWriter.Write(lastOrderItems[j]);
+					gameEventWriter.Write(lastOrderItems[j] ?? "");
 				}
 				deliveryArrivedEvent.Send(gameEventWriter, 0uL, safe: true);
 			}
@@ -1409,11 +1437,18 @@ namespace WreckMPExtendedSync
 					int count = reader.ReadInt32();
 					for (int i = 0; i < count; i++)
 					{
-						items.Add(reader.ReadString());
+						string s = reader.ReadString();
+						if (!string.IsNullOrEmpty(s) && !string.IsNullOrEmpty(s.Trim()))
+						{
+							items.Add(s.Trim());
+						}
 					}
 				}
 			}
-			catch {}
+			catch (Exception ex)
+			{
+				FileLogger.WriteLine("ERR OnReceiveDeliveryArrived read stream: " + ex.Message, "ERROR");
+			}
 
 			if (items.Count > 0)
 			{
@@ -1430,6 +1465,7 @@ namespace WreckMPExtendedSync
 			{
 				FileLogger.WriteLine("RX DeliveryArrived: receipt FSM price set to " + deliveredPrice, "INFO");
 			}
+			FileLogger.WriteLine("RX DeliveryArrived: received " + items.Count + " items: [" + string.Join(", ", items.ToArray()) + "]", "INFO");
 
 			isNetworkApplying = true;
 			try
@@ -1499,16 +1535,23 @@ namespace WreckMPExtendedSync
 			PlayMakerArrayListProxy proxy = FindOrderList();
 			if (proxy != null && proxy.arrayList != null && proxy.arrayList.Count > 0)
 			{
-				lastOrderItems.Clear();
+				List<string> valid = new List<string>();
 				for (int i = 0; i < proxy.arrayList.Count; i++)
 				{
 					object obj = proxy.arrayList[i];
 					if (obj != null)
 					{
-						lastOrderItems.Add(obj.ToString());
+						string s = obj.ToString().Trim();
+						if (!string.IsNullOrEmpty(s)) valid.Add(s);
 					}
 				}
+				if (valid.Count > 0)
+				{
+					lastOrderItems.Clear();
+					lastOrderItems.AddRange(valid);
+				}
 			}
+			lastOrderItems.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
 
 			float billPrice = 0f;
 			PlayMakerFSM payFsm = cachedPostOrderPayFsm;
@@ -1553,7 +1596,11 @@ namespace WreckMPExtendedSync
 					int count = reader.ReadInt32();
 					for (int i = 0; i < count; i++)
 					{
-						items.Add(reader.ReadString());
+						string s = reader.ReadString();
+						if (!string.IsNullOrEmpty(s) && !string.IsNullOrEmpty(s.Trim()))
+						{
+							items.Add(s.Trim());
+						}
 					}
 				}
 				else if (remaining >= 12)
@@ -1562,7 +1609,11 @@ namespace WreckMPExtendedSync
 					int count = reader.ReadInt32();
 					for (int i = 0; i < count; i++)
 					{
-						items.Add(reader.ReadString());
+						string s = reader.ReadString();
+						if (!string.IsNullOrEmpty(s) && !string.IsNullOrEmpty(s.Trim()))
+						{
+							items.Add(s.Trim());
+						}
 					}
 				}
 				else
@@ -1734,23 +1785,118 @@ namespace WreckMPExtendedSync
 			return count;
 		}
 
-		public int SpawnMissingOrderBoxes(Vector3 storePos, List<string> items = null)
+		private bool isSpawningBoxes = false;
+
+		public void SpawnMissingOrderBoxes(Vector3 storePos, List<string> items = null)
 		{
-			int parcelCount = CountParcelBoxesNear(storePos, 25f);
-			List<string> list = (items != null && items.Count > 0) ? items : lastOrderItems;
-			if (parcelCount == 0 && list != null && list.Count > 0)
+			if (isSpawningBoxes)
 			{
+				FileLogger.WriteLine("SpawnMissingOrderBoxes: already in progress, skipping concurrent call", "INFO");
+				return;
+			}
+			StartCoroutine(SpawnMissingOrderBoxesCoroutine(storePos, items));
+		}
+
+		public IEnumerator SpawnMissingOrderBoxesCoroutine(Vector3 storePos, List<string> items = null)
+		{
+			isSpawningBoxes = true;
+			try
+			{
+				// Задача 6: клинап от текущего завала (> 50 коробок)
+				int initialCount = CountParcelBoxesNear(storePos, 25f);
+				if (initialCount > 50)
+				{
+					FileLogger.WriteLine("Cleanup: found " + initialCount + " boxes (>50), purging clutter...", "INFO");
+					GameObject[] all = UnityEngine.Object.FindObjectsOfType<GameObject>();
+					if (all != null)
+					{
+						for (int k = 0; k < all.Length; k++)
+						{
+							if (all[k] == null) continue;
+							string n = all[k].name;
+							if (string.IsNullOrEmpty(n)) continue;
+							if (n.IndexOf("FusePackage", StringComparison.OrdinalIgnoreCase) >= 0 ||
+							    n.IndexOf("advert", StringComparison.OrdinalIgnoreCase) >= 0 ||
+							    n.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+							    n.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0)
+							{
+								continue;
+							}
+							if (n.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0 &&
+							    (n.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 || n.StartsWith("amis auto", StringComparison.OrdinalIgnoreCase)))
+							{
+								if (Vector3.Distance(all[k].transform.position, storePos) <= 25f)
+								{
+									UnityEngine.Object.Destroy(all[k]);
+								}
+							}
+						}
+					}
+					yield return new WaitForSeconds(0.1f);
+				}
+
+				// Задача 2: guard от гонки (пауза 0.3с и повторная проверка)
+				yield return new WaitForSeconds(0.3f);
+				if (CountParcelBoxesNear(storePos, 25f) > 0)
+				{
+					FileLogger.WriteLine("spawn skipped: boxes already present", "INFO");
+					yield break;
+				}
+
+				// Задача 3: фильтр валидных имён деталей
+				List<string> list = (items != null && items.Count > 0) ? new List<string>(items) : new List<string>(lastOrderItems);
+				list.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
+				if (list.Count == 0)
+				{
+					PlayMakerArrayListProxy proxy = cachedOrderList ?? FindOrderList();
+					if (proxy != null && proxy.arrayList != null)
+					{
+						for (int p = 0; p < proxy.arrayList.Count; p++)
+						{
+							object o = proxy.arrayList[p];
+							if (o != null)
+							{
+								string str = o.ToString().Trim();
+								if (!string.IsNullOrEmpty(str))
+								{
+									list.Add(str);
+								}
+							}
+						}
+					}
+				}
+
+				if (list.Count == 0)
+				{
+					FileLogger.WriteLine("SpawnMissingOrderBoxes: order list is empty, nothing to spawn", "INFO");
+					yield break;
+				}
+
 				ExtendedSyncDebugHUD.Log("<color=#ffaa00>WARN [PARTS]: На кассе 0 коробок. Запуск гарантированного спавна " + list.Count + " посылок...</color>");
 				GameObject template = FindParcelBoxTemplateInResources();
 				if (template != null)
 				{
 					int partsLayer = LayerMask.NameToLayer("Parts");
 					int pLayer = (partsLayer != -1) ? partsLayer : 19;
+
+					PlayMakerFSM payFsm;
+					GameObject postOrderBuyObj = FindPostOrderBuy(out payFsm);
+					Vector3 basePos = (postOrderBuyObj != null && postOrderBuyObj.transform.position.sqrMagnitude > 100f) 
+						? postOrderBuyObj.transform.position 
+						: storePos;
+
 					for (int i = 0; i < list.Count; i++)
 					{
 						string partName = list[i];
+						if (string.IsNullOrEmpty(partName) || string.IsNullOrEmpty(partName.Trim())) continue;
+						partName = partName.Trim();
 						string cleanPartName = UniversalHandItemSync.GetCleanItemName(partName);
-						Vector3 spawnPos = storePos + new Vector3(i * 0.45f, 0.1f, 0f);
+
+						// Задача 4: сетка 3 колонки x N с шагом 0.5м от позиции чека
+						int col = i % 3;
+						int row = i / 3;
+						Vector3 spawnPos = basePos + new Vector3((col - 1) * 0.5f, 0.1f, row * 0.5f);
+
 						GameObject newBox = (GameObject)UnityEngine.Object.Instantiate(template, spawnPos, Quaternion.identity);
 						newBox.name = "amis auto toy package(Clone)";
 						newBox.layer = pLayer;
@@ -1762,12 +1908,12 @@ namespace WreckMPExtendedSync
 						{
 							if (rend != null) rend.enabled = true;
 						}
-						foreach (var col in newBox.GetComponentsInChildren<Collider>(true))
+						foreach (var colComp in newBox.GetComponentsInChildren<Collider>(true))
 						{
-							if (col != null)
+							if (colComp != null)
 							{
-								col.isTrigger = false;
-								col.enabled = true;
+								colComp.isTrigger = false;
+								colComp.enabled = true;
 							}
 						}
 						Rigidbody rb = newBox.GetComponent<Rigidbody>() ?? newBox.GetComponentInChildren<Rigidbody>();
@@ -1807,13 +1953,13 @@ namespace WreckMPExtendedSync
 								if (boxFsms[f].FsmVariables != null)
 								{
 									FsmString fsmStr = boxFsms[f].FsmVariables.FindFsmString("Item") ?? 
-									                   boxFsms[f].FsmVariables.FindFsmString("Part") ?? 
-									                   boxFsms[f].FsmVariables.FindFsmString("Name");
+													   boxFsms[f].FsmVariables.FindFsmString("Part") ?? 
+													   boxFsms[f].FsmVariables.FindFsmString("Name");
 									if (fsmStr != null) fsmStr.Value = partName;
 
 									FsmGameObject fsmGo = boxFsms[f].FsmVariables.FindFsmGameObject("Item") ?? 
-									                      boxFsms[f].FsmVariables.FindFsmGameObject("Part") ?? 
-									                      boxFsms[f].FsmVariables.FindFsmGameObject("Spawn");
+														  boxFsms[f].FsmVariables.FindFsmGameObject("Part") ?? 
+														  boxFsms[f].FsmVariables.FindFsmGameObject("Spawn");
 									if (fsmGo != null)
 									{
 										GameObject partTmpl = FindPartTemplateInResources(cleanPartName);
@@ -1830,9 +1976,36 @@ namespace WreckMPExtendedSync
 						newBox.SetActive(true);
 						ExtendedSyncDebugHUD.Log("<color=#33ff33>[PARTS]</color> Спавн посылки: " + partName + " [#" + i + "]");
 						FileLogger.WriteLine("[PARTS] Спавн посылки: " + partName + " [#" + i + "]", "INFO");
+
+						// Задача 4: пачками по 20 с паузой 0.5с для стабильности физики
+						if ((i + 1) % 20 == 0 && i + 1 < list.Count)
+						{
+							yield return new WaitForSeconds(0.5f);
+						}
 					}
+
 					ScanAndHookParcels();
-					return list.Count;
+
+					// Задача 5: FSM чека — подключить оплату
+					try
+					{
+						if (payFsm == null) FindPostOrderBuy(out payFsm);
+						if (payFsm != null)
+						{
+							FsmEvent fsmEvent = payFsm.Fsm.GetEvent("MP_PAY");
+							if (fsmEvent == null)
+							{
+								fsmEvent = payFsm.AddEvent("MP_PAY");
+								payFsm.AddGlobalTransition(fsmEvent, "State 1");
+							}
+							payFsm.SendEvent("MP_PAY");
+							FileLogger.WriteLine("SpawnMissingOrderBoxes: sent MP_PAY to postOrderBuy FSM", "INFO");
+						}
+					}
+					catch (Exception ex)
+					{
+						FileLogger.WriteLine("ERR SpawnMissingOrderBoxes MP_PAY: " + ex.Message, "ERROR");
+					}
 				}
 				else
 				{
@@ -1840,7 +2013,10 @@ namespace WreckMPExtendedSync
 					FileLogger.WriteLine("ERR [PARTS]: Шаблон коробки посылки не найден в ресурсах!", "ERROR");
 				}
 			}
-			return parcelCount;
+			finally
+			{
+				isSpawningBoxes = false;
+			}
 		}
 
 		private IEnumerator CompletePostOrderPayReceiver(PlayMakerFSM payFsm, GameObject postOrderBuyObj, List<string> items)
@@ -1954,6 +2130,7 @@ namespace WreckMPExtendedSync
 
 		public void StartRegisterBoxes(Vector3 pos, bool isPayer = false)
 		{
+			SpawnMissingOrderBoxes(pos);
 			StartCoroutine(RegisterUnpackedBoxesCoroutine(pos, isPayer));
 		}
 
