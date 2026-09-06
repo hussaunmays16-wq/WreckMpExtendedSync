@@ -18,3 +18,5 @@ postman/
 *.suo
 .vs/
 .idea/
+
+.workbuddy-ai/

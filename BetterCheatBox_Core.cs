@@ -86,7 +86,11 @@ namespace WreckMPExtendedSync
 					continue;
 				}
 				bool fired = false;
-				if (sub.stateNames != null)
+				if (sub.stateNames == null || sub.stateNames.Length == 0)
+				{
+					fired = true;
+				}
+				else
 				{
 					for (int i = 0; i < sub.stateNames.Length; i++)
 					{
@@ -138,7 +142,7 @@ namespace WreckMPExtendedSync
 
 		public override string Author => "WreckMP Community";
 
-		public override string Version => "3.9.4";
+		public override string Version => "3.9.5";
 
 		public override string Description => "Полноценная автоматическая синхронизация: пассажир Jonnez (клавиша U), капот Сацумы, чемодан Йоуко, Паятсо, килью, заказ, почта и коробки Теймо.";
 
@@ -231,7 +235,7 @@ namespace WreckMPExtendedSync
 			{
 				ModConsole.Error("[PostalChain Harmony Error] " + ex.Message);
 			}
-			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.9.4]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
+			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.9.5]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
 		}
 	}
 	public static class LobbyDisconnectionGuard
@@ -357,7 +361,7 @@ namespace WreckMPExtendedSync
 				lastFlushTime = 0f;
 				userLineWritten = false;
 				WriteLine("==================================================", "INFO");
-				WriteLine("SESSION START v3.9.4 | " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "INFO");
+				WriteLine("SESSION START v3.9.5 | " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), "INFO");
 				WriteLine("==================================================", "INFO");
 			}
 			catch (Exception ex)
@@ -507,7 +511,7 @@ namespace WreckMPExtendedSync
 				GUI.color = Color.white;
 				GUILayout.BeginArea(new Rect(Screen.width / 2 - 280, Screen.height - 225, 560f, 215f));
 				GUILayout.BeginVertical("box");
-				GUILayout.Label("<color=#00ffcc><b>★ WRECKMP EXTENDED NETWORK SYNC v3.9.4 ★</b></color>");
+				GUILayout.Label("<color=#00ffcc><b>★ WRECKMP EXTENDED NETWORK SYNC v3.9.5 ★</b></color>");
 				for (int i = 0; i < logs.Count; i++)
 				{
 					if (logs[i] != null && !string.IsNullOrEmpty(logs[i].Text))
