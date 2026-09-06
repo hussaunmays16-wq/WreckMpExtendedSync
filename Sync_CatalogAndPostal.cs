@@ -470,7 +470,7 @@ namespace WreckMPExtendedSync
 							fsmEvent2 = cachedPostOrderPayFsm.AddEvent("MP_PAY");
 							cachedPostOrderPayFsm.AddGlobalTransition(fsmEvent2, "State 1");
 						}
-						SafeFsmWatcher.Attach(cachedPostOrderPayFsm, new string[3] { "State 1", "CreateItems", "Pay" }, delegate
+						SafeFsmWatcher.Attach(cachedPostOrderPayFsm, new string[2] { "CreateItems", "Pay" }, delegate
 						{
 							PlayMakerArrayListProxy proxy2 = FindOrderList();
 							if (proxy2 != null && proxy2.arrayList != null)
@@ -1599,7 +1599,20 @@ namespace WreckMPExtendedSync
 				{
 					for (int i = 0; i < all.Length; i++)
 					{
-						if (all[i] != null && IsParcelBox(all[i].name))
+						if (all[i] == null) continue;
+						string n = all[i].name;
+						if (string.IsNullOrEmpty(n)) continue;
+
+						if (n.IndexOf("FusePackage", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						    n.IndexOf("advert", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						    n.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						    n.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							continue;
+						}
+
+						if (n.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0 &&
+						    (n.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 || n.StartsWith("amis auto", StringComparison.OrdinalIgnoreCase)))
 						{
 							if (Vector3.Distance(all[i].transform.position, pos) <= radius)
 							{
@@ -1908,16 +1921,13 @@ namespace WreckMPExtendedSync
 			if (name.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			    name.IndexOf("PostOffice", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			    name.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+			    name.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			    name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
 			{
 				return false;
 			}
 			return name.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("parcel", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("spoilers", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("wheels", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("gauges", StringComparison.OrdinalIgnoreCase) >= 0 ||
-			       name.IndexOf("subwoofer", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("amis", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("post ", StringComparison.OrdinalIgnoreCase) >= 0 ||
 			       name.IndexOf("post_", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -2116,8 +2126,26 @@ namespace WreckMPExtendedSync
 			foreach (PlayMakerFSM playMakerFSM in array)
 			{
 				if (playMakerFSM == null || playMakerFSM.gameObject == null) continue;
-				string text = playMakerFSM.gameObject.name;
-				string rootText = (playMakerFSM.transform.root != null) ? playMakerFSM.transform.root.name : "";
+				string text = playMakerFSM.gameObject.name ?? "";
+				string rootText = (playMakerFSM.transform.root != null) ? (playMakerFSM.transform.root.name ?? "") : "";
+
+				if (text.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				    text.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				    rootText.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				    rootText.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					continue;
+				}
+
+				bool hasParcelMarker = text.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                       text.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                       text.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                       rootText.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                       rootText.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                       rootText.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0;
+
+				if (!hasParcelMarker) continue;
+
 				bool isBox = IsParcelBox(text) || IsParcelBox(rootText) || IsParcelBox(playMakerFSM.gameObject);
 				if (!isBox) continue;
 
@@ -2509,8 +2537,17 @@ namespace WreckMPExtendedSync
 			{
 				GameObject go = all[i];
 				if (go == null) continue;
-				if (!IsParcelBox(go.name) && (go.transform.root == null || !IsParcelBox(go.transform.root.name))) continue;
-				if (Vector3.Distance(go.transform.position, unboxPos) > 3f) continue; // та же коробка
+
+				string name = go.name ?? "";
+				string rootName = (go.transform.root != null) ? (go.transform.root.name ?? "") : "";
+
+				bool isCandidate = name.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                   name.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                   rootName.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				                   rootName.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0;
+
+				if (!isCandidate) continue;
+				if (Vector3.Distance(go.transform.position, unboxPos) > 5f) continue;
 				
 				// Пометить как обработанную, чтобы watcher зрителя не счёл это своим открытием
 				ParcelUnboxTracker trk = go.GetComponent<ParcelUnboxTracker>();
