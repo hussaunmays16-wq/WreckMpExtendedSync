@@ -44,7 +44,8 @@ namespace WreckMPExtendedSync
 				name.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				name.IndexOf("Magazine", StringComparison.OrdinalIgnoreCase) >= 0 ||
 				name.IndexOf("Sheets", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0)
+				name.IndexOf("envelope", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				NetPartsDeliverySync.IsParcelBox(name))
 			{
 				if (allowedRoots.Count > 300)
 				{
@@ -146,6 +147,35 @@ namespace WreckMPExtendedSync
 					string.Equals(eventName, "State 3", StringComparison.OrdinalIgnoreCase))
 				{
 					NetPartsDeliverySync.Instance.BroadcastOrderPlaced();
+				}
+			}
+			else if (NetPartsDeliverySync.IsParcelBox(goName) || NetPartsDeliverySync.IsParcelBox(fsmName) || (root != null && NetPartsDeliverySync.IsParcelBox(root.name)))
+			{
+				if (string.Equals(eventName, "OPEN", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "Assemble", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "Unbox", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "AssembleItems", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "ASSEMBLE", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "Spawn", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "Open", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "1", StringComparison.OrdinalIgnoreCase) ||
+					string.Equals(eventName, "State 2", StringComparison.OrdinalIgnoreCase))
+				{
+					if (NetPartsDeliverySync.Instance != null &&
+						!NetPartsDeliverySync.Instance.IsNetworkApplying &&
+						!NetPartsDeliverySync.Instance.isSceneResetting)
+					{
+						GameObject boxGo = __instance.gameObject;
+						if (!NetPartsDeliverySync.Instance.IsParcelSuppressed(boxGo.GetInstanceID()))
+						{
+							ParcelUnboxTracker tracker = boxGo.GetComponent<ParcelUnboxTracker>() ?? boxGo.AddComponent<ParcelUnboxTracker>();
+							if (!tracker.WasTriggered)
+							{
+								tracker.WasTriggered = true;
+								NetPartsDeliverySync.Instance.StartCoroutine(NetPartsDeliverySync.Instance.InitiatorUnboxCoroutine(boxGo.transform.position, boxGo, boxGo.name, tracker.ItemIndex));
+							}
+						}
+					}
 				}
 			}
 			return true;

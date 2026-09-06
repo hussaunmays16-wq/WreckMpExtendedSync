@@ -193,6 +193,8 @@ namespace WreckMPExtendedSync
 
 		private float nextEnvelopeScanTime;
 
+		private float nextParcelScanTime;
+
 		private void Awake()
 		{
 			Instance = this;
@@ -248,6 +250,7 @@ namespace WreckMPExtendedSync
 				lastOrderItems.Clear();
 				unboxCounter = 0;
 				nextOrderListCheckTime = 0f;
+				nextParcelScanTime = 0f;
 			}
 			catch (Exception ex)
 			{
@@ -721,6 +724,11 @@ namespace WreckMPExtendedSync
 						ExtendedSyncDebugHUD.Log("<color=#33ff33>[PARTS]</color> Домашний телефон успешно подключен к синхронизации звонков Теймо!");
 					}
 				}
+				if (Time.time > nextParcelScanTime)
+				{
+					nextParcelScanTime = Time.time + 2f;
+					ScanAndHookParcels();
+				}
 			}
 			catch (Exception ex)
 			{
@@ -974,6 +982,8 @@ namespace WreckMPExtendedSync
 					env.SetActive(true);
 					cachedEnvelope = env;
 					CheatSpawnedItemSync.AttachToSpawned(env, "msc_shared_envelope");
+					BetterCheatBoxSyncManager.ResetRigidbodyPhysicsLocal(env);
+					BetterCheatBoxSyncManager.UpdateNetRigidbodyCache(env, pos, rot);
 
 					PlayMakerFSM component = cachedEnvelope.GetComponent<PlayMakerFSM>();
 					if (component != null)
@@ -1497,6 +1507,7 @@ namespace WreckMPExtendedSync
 				ExtendedSyncDebugHUD.Log("<color=#33ff33>OUT [PARTS]: Заказ деталей оплачен на кассе! (" + lastOrderItems.Count + " дет.)</color>");
 			}
 			CleanupAllPostOrderBuyObjects();
+			StartCoroutine(ScanAndHookParcelsCoroutine());
 		}
 
 		private void OnReceivePostOrderPay(GameEventReader reader)
@@ -1603,6 +1614,8 @@ namespace WreckMPExtendedSync
 						ModConsole.Error("[WreckMP ExtendedSync Error]: " + ex.Message);
 					}
 				}
+
+				StartCoroutine(ScanAndHookParcelsCoroutine());
 			}
 			finally
 			{
@@ -1915,40 +1928,83 @@ namespace WreckMPExtendedSync
 			return FindCatalogPartTemplate(cleanPartName);
 		}
 
-		private void ScanAndHookParcels()
+		public IEnumerator ScanAndHookParcelsCoroutine()
 		{
-			GameObject store = GameObject.Find("STORE");
-			if (store == null) return;
-			PlayMakerFSM[] array = store.GetComponentsInChildren<PlayMakerFSM>(true);
-			if (array == null) return;
+			ScanAndHookParcels();
+			yield return new WaitForSeconds(0.2f);
+			ScanAndHookParcels();
+			yield return new WaitForSeconds(0.3f);
+			ScanAndHookParcels();
+			yield return new WaitForSeconds(0.5f);
+			ScanAndHookParcels();
+			yield return new WaitForSeconds(1.0f);
+			ScanAndHookParcels();
+		}
 
-			foreach (PlayMakerFSM playMakerFSM in array)
+		public void ScanAndHookParcels()
+		{
+			if (isSceneResetting) return;
+
+			Vector3 storePos = new Vector3(-1551.5f, 4.5f, 1182.8f);
+			List<GameObject> candidates = new List<GameObject>();
+
+			// 1. Физический поиск в радиусе 30м от магазина (самый быстрый и точный для реальных коробок на полу/кассе)
+			Collider[] colliders = Physics.OverlapSphere(storePos, 30f);
+			if (colliders != null)
 			{
-				if (playMakerFSM == null || playMakerFSM.gameObject == null) continue;
-				string text = playMakerFSM.gameObject.name ?? "";
-				string rootText = (playMakerFSM.transform.root != null) ? (playMakerFSM.transform.root.name ?? "") : "";
-
-				if (text.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				    text.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				    rootText.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				    rootText.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0)
+				for (int i = 0; i < colliders.Length; i++)
 				{
-					continue;
+					Collider col = colliders[i];
+					if (col == null) continue;
+					GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.gameObject;
+					if (go == null) continue;
+					string n = go.name ?? "";
+					string rootN = (go.transform.root != null) ? (go.transform.root.name ?? "") : "";
+
+					if (n.IndexOf("STORE", StringComparison.OrdinalIgnoreCase) >= 0 && n.Length <= 5) continue;
+					if (n.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+
+					if (IsParcelBox(n) || IsParcelBox(rootN) || IsParcelBox(go))
+					{
+						GameObject boxObj = (go.transform.root != null && IsParcelBox(go.transform.root.gameObject)) ? go.transform.root.gameObject : go;
+						if (!candidates.Contains(boxObj))
+						{
+							candidates.Add(boxObj);
+						}
+					}
 				}
+			}
 
-				bool hasParcelMarker = text.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                       text.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                       text.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                       rootText.IndexOf("package", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                       rootText.IndexOf("amis auto", StringComparison.OrdinalIgnoreCase) >= 0 ||
-				                       rootText.IndexOf("(Clone)", StringComparison.OrdinalIgnoreCase) >= 0;
+			// 2. Поиск по иерархии STORE (на случай ещё не активированных коллайдеров)
+			GameObject store = GameObject.Find("STORE");
+			if (store != null)
+			{
+				PlayMakerFSM[] storeFsms = store.GetComponentsInChildren<PlayMakerFSM>(true);
+				if (storeFsms != null)
+				{
+					for (int j = 0; j < storeFsms.Length; j++)
+					{
+						PlayMakerFSM f = storeFsms[j];
+						if (f == null || f.gameObject == null) continue;
+						string fn = f.gameObject.name ?? "";
+						if (fn.IndexOf("Register", StringComparison.OrdinalIgnoreCase) >= 0 || fn.IndexOf("PostOrderBuy", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+						if (IsParcelBox(fn) || IsParcelBox(f.gameObject))
+						{
+							if (!candidates.Contains(f.gameObject))
+							{
+								candidates.Add(f.gameObject);
+							}
+						}
+					}
+				}
+			}
 
-				if (!hasParcelMarker) continue;
+			// 3. Для каждого кандидата — привязать ParcelUnboxTracker и SafeFsmWatcher
+			for (int c = 0; c < candidates.Count; c++)
+			{
+				GameObject boxGo = candidates[c];
+				if (boxGo == null) continue;
 
-				bool isBox = IsParcelBox(text) || IsParcelBox(rootText) || IsParcelBox(playMakerFSM.gameObject);
-				if (!isBox) continue;
-
-				GameObject boxGo = playMakerFSM.gameObject;
 				int instanceID = boxGo.GetInstanceID();
 				if (hookedParcels.Contains(instanceID)) continue;
 				hookedParcels.Add(instanceID);
@@ -1960,26 +2016,57 @@ namespace WreckMPExtendedSync
 					tracker.BoxName = boxGo.name;
 				}
 
+				if (tracker.ItemIndex < 0 && lastOrderItems != null && lastOrderItems.Count > 0)
+				{
+					string cleanBox = UniversalHandItemSync.GetCleanItemName(boxGo.name);
+					string fsmPart = FindSpawnedPartNameFromFsm(boxGo);
+					string cand = !string.IsNullOrEmpty(fsmPart) ? UniversalHandItemSync.GetCleanItemName(fsmPart) : cleanBox;
+					for (int i = 0; i < lastOrderItems.Count; i++)
+					{
+						string oName = UniversalHandItemSync.GetCleanItemName(lastOrderItems[i]);
+						if (string.Equals(oName, cand, StringComparison.OrdinalIgnoreCase) ||
+						    cand.IndexOf(oName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+						    oName.IndexOf(cand, StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							tracker.ItemIndex = i;
+							tracker.PartName = lastOrderItems[i];
+							break;
+						}
+					}
+				}
+
 				Transform targetTr = boxGo.transform;
 				string boxName = boxGo.name;
 				int localId = instanceID;
-				SafeFsmWatcher.Attach(playMakerFSM, new string[9] { "1", "Open", "Assemble", "Unbox", "AssembleItems", "OPEN", "ASSEMBLE", "State 2", "Spawn" }, delegate
+
+				PlayMakerFSM[] boxFsms = boxGo.GetComponentsInChildren<PlayMakerFSM>(true);
+				if (boxFsms != null && boxFsms.Length > 0)
 				{
-					if (suppressedParcels.Contains(localId))
+					for (int f = 0; f < boxFsms.Length; f++)
 					{
-						suppressedParcels.Remove(localId);
-					}
-					else if (!isNetworkApplying && targetTr != null)
-					{
-						int itmIdx = (tracker != null) ? tracker.ItemIndex : -1;
-						if (tracker != null)
+						PlayMakerFSM boxFsm = boxFsms[f];
+						if (boxFsm == null) continue;
+						SafeFsmWatcher.Attach(boxFsm, new string[9] { "1", "Open", "Assemble", "Unbox", "AssembleItems", "OPEN", "ASSEMBLE", "State 2", "Spawn" }, delegate
 						{
-							tracker.WasTriggered = true;
-						}
-						StartCoroutine(InitiatorUnboxCoroutine(targetTr.position, boxGo, boxName, itmIdx));
+							if (suppressedParcels.Contains(localId))
+							{
+								suppressedParcels.Remove(localId);
+							}
+							else if (!isNetworkApplying && boxGo != null)
+							{
+								if (tracker != null && tracker.WasTriggered) return;
+								if (tracker != null)
+								{
+									tracker.WasTriggered = true;
+								}
+								StartCoroutine(InitiatorUnboxCoroutine(targetTr != null ? targetTr.position : boxGo.transform.position, boxGo, boxName, (tracker != null) ? tracker.ItemIndex : -1));
+							}
+						});
 					}
-				});
+				}
+
 				ExtendedSyncDebugHUD.Log("<color=#33ff33>[PARTS]</color> Найдена посылка " + boxName + ", хук распаковки подключен!");
+				FileLogger.WriteLine("ScanAndHookParcels: hooked box " + boxName + " [#" + tracker.ItemIndex + ", part=" + tracker.PartName + "]", "INFO");
 			}
 		}
 
@@ -2008,8 +2095,8 @@ namespace WreckMPExtendedSync
 				cleanPartName = UniversalHandItemSync.GetCleanItemName(cleanPartName);
 			}
 
-			// Check tight 1.5m radius for spawned part, strictly filtering out vehicle parts
-			Collider[] colliders = Physics.OverlapSphere(boxPos, 1.5f);
+			// Check tight 2.2m radius for spawned part, strictly filtering out vehicle parts
+			Collider[] colliders = Physics.OverlapSphere(boxPos, 2.2f);
 			GameObject foundPart = null;
 
 			if (colliders != null)
@@ -2055,12 +2142,22 @@ namespace WreckMPExtendedSync
 
 			if (string.IsNullOrEmpty(cleanPartName))
 			{
+				ParcelUnboxTracker trk = (boxGo != null) ? boxGo.GetComponent<ParcelUnboxTracker>() : null;
+				if (trk != null && !string.IsNullOrEmpty(trk.PartName))
+				{
+					cleanPartName = MatchAmisCatalogPart(trk.PartName);
+				}
+			}
+
+			if (string.IsNullOrEmpty(cleanPartName))
+			{
 				cleanPartName = MatchAmisCatalogPart(ExtractPartNameFromBox(boxName));
 			}
 
 			if (string.IsNullOrEmpty(cleanPartName) && lastOrderItems.Count > 0)
 			{
-				cleanPartName = MatchAmisCatalogPart(lastOrderItems[0]);
+				int validIdx = (itemIndex >= 0 && itemIndex < lastOrderItems.Count) ? itemIndex : 0;
+				cleanPartName = MatchAmisCatalogPart(lastOrderItems[validIdx]);
 			}
 
 			if (string.IsNullOrEmpty(cleanPartName))

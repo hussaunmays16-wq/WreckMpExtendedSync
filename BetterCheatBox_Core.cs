@@ -142,7 +142,7 @@ namespace WreckMPExtendedSync
 
 		public override string Author => "WreckMP Community";
 
-		public override string Version => "3.9.8";
+		public override string Version => "3.9.9";
 
 		public override string Description => "Полноценная автоматическая синхронизация: пассажир Jonnez (клавиша U), капот Сацумы, чемодан Йоуко, Паятсо, килью, заказ, почта и коробки Теймо.";
 
@@ -235,7 +235,7 @@ namespace WreckMPExtendedSync
 			{
 				ModConsole.Error("[PostalChain Harmony Error] " + ex.Message);
 			}
-			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.9.8]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
+			ModConsole.Print("<color=green>[WreckMP Extended Sync v3.9.9]</color> Ядро синхронизации успешно запущено (Режим честного P2P)!");
 		}
 	}
 	public static class LobbyDisconnectionGuard
@@ -541,6 +541,8 @@ namespace WreckMPExtendedSync
 
 		private bool suitcaseWasFoundOnce;
 
+		public bool isSceneResetting;
+
 		private void Awake()
 		{
 			Instance = this;
@@ -560,10 +562,22 @@ namespace WreckMPExtendedSync
 			cachedSuitcase = null;
 			hasBeenClaimed = false;
 			suitcaseWasFoundOnce = false;
+			isSceneResetting = true;
 			if (Application.loadedLevelName == "GAME")
 			{
+				StartCoroutine(ClearResettingFlag());
 				StartCoroutine(LazyFindSuitcase());
 			}
+			else
+			{
+				isSceneResetting = false;
+			}
+		}
+
+		private IEnumerator ClearResettingFlag()
+		{
+			yield return new WaitForSeconds(3f);
+			isSceneResetting = false;
 		}
 
 		private IEnumerator LazyFindSuitcase()
@@ -599,7 +613,11 @@ namespace WreckMPExtendedSync
 
 		private void Update()
 		{
-			if (Application.loadedLevelName != "GAME" || hasBeenClaimed || isNetworkApplying)
+			if (Application.loadedLevelName != "GAME" || hasBeenClaimed || isNetworkApplying || isSceneResetting)
+			{
+				return;
+			}
+			if (NetPartsDeliverySync.Instance != null && NetPartsDeliverySync.Instance.isSceneResetting)
 			{
 				return;
 			}
@@ -619,7 +637,11 @@ namespace WreckMPExtendedSync
 
 		public void BroadcastSuitcaseTaken()
 		{
-			if (hasBeenClaimed || isNetworkApplying)
+			if (hasBeenClaimed || isNetworkApplying || isSceneResetting)
+			{
+				return;
+			}
+			if (NetPartsDeliverySync.Instance != null && NetPartsDeliverySync.Instance.isSceneResetting)
 			{
 				return;
 			}
@@ -832,14 +854,33 @@ namespace WreckMPExtendedSync
 						{
 							if (!isNetworkApplying)
 							{
-								FsmFloat paymentVar = fsm.FsmVariables.FindFsmFloat("Payment") ?? fsm.FsmVariables.FindFsmFloat("Money");
-								float marks = paymentVar?.Value ?? 170f;
-								if (paymentVar == null)
+								FsmFloat paymentVar = fsm.FsmVariables.FindFsmFloat("Payment") ?? 
+								                      fsm.FsmVariables.FindFsmFloat("Money") ?? 
+								                      fsm.FsmVariables.FindFsmFloat("Payout") ?? 
+								                      fsm.FsmVariables.FindFsmFloat("Price") ?? 
+								                      fsm.FsmVariables.FindFsmFloat("Sum") ?? 
+								                      fsm.FsmVariables.FindFsmFloat("Pay");
+								float marks = 170f;
+								if (paymentVar != null && paymentVar.Value > 0f)
 								{
-									// Fallback-сумма: ищем шире перед тем как слать 170
-									paymentVar = fsm.FsmVariables.FindFsmFloat("Price") ?? fsm.FsmVariables.FindFsmFloat("Sum");
-									if (paymentVar != null) marks = paymentVar.Value;
-									else ModConsole.Error("[KILJU] Переменная оплаты не найдена в FSM — отправлена fallback-сумма 170 MK!");
+									marks = paymentVar.Value;
+								}
+								else
+								{
+									FsmInt paymentInt = fsm.FsmVariables.FindFsmInt("Payment") ?? 
+									                    fsm.FsmVariables.FindFsmInt("Money") ?? 
+									                    fsm.FsmVariables.FindFsmInt("Payout") ?? 
+									                    fsm.FsmVariables.FindFsmInt("Price") ?? 
+									                    fsm.FsmVariables.FindFsmInt("Sum") ?? 
+									                    fsm.FsmVariables.FindFsmInt("Pay");
+									if (paymentInt != null && paymentInt.Value > 0)
+									{
+										marks = (float)paymentInt.Value;
+									}
+									else if (paymentVar == null && paymentInt == null)
+									{
+										ModConsole.Print("[KILJU] Переменная оплаты не найдена в FSM — использована fallback-сумма 170 MK");
+									}
 								}
 								BroadcastKiljuSale(1, marks);
 							}
@@ -3740,10 +3781,21 @@ namespace WreckMPExtendedSync
 							{
 								try
 								{
+									string pickState = "Pick phone";
+									string closeState = "Close phone";
+									if (receiverFsm.FsmStates != null)
+									{
+										for (int st = 0; st < receiverFsm.FsmStates.Length; st++)
+										{
+											string sn = receiverFsm.FsmStates[st]?.Name ?? "";
+											if (sn.IndexOf("pick", StringComparison.OrdinalIgnoreCase) >= 0) pickState = sn;
+											else if (sn.IndexOf("close", StringComparison.OrdinalIgnoreCase) >= 0 || sn.IndexOf("hang", StringComparison.OrdinalIgnoreCase) >= 0) closeState = sn;
+										}
+									}
 									FsmEvent evPick = receiverFsm.AddEvent("MP_PICK");
-									receiverFsm.AddGlobalTransition(evPick, "Pick phone");
+									receiverFsm.AddGlobalTransition(evPick, pickState);
 									FsmEvent evClose = receiverFsm.AddEvent("MP_CLOSE");
-									receiverFsm.AddGlobalTransition(evClose, "Close phone");
+									receiverFsm.AddGlobalTransition(evClose, closeState);
 								}
 								catch {}
 
@@ -4340,10 +4392,21 @@ namespace WreckMPExtendedSync
 					{
 						try
 						{
+							string onState = "On";
+							string offState = "Off";
+							if (flashlightFsm.FsmStates != null)
+							{
+								for (int st = 0; st < flashlightFsm.FsmStates.Length; st++)
+								{
+									string sn = flashlightFsm.FsmStates[st]?.Name ?? "";
+									if (string.Equals(sn, "on", StringComparison.OrdinalIgnoreCase)) onState = sn;
+									else if (string.Equals(sn, "off", StringComparison.OrdinalIgnoreCase)) offState = sn;
+								}
+							}
 							FsmEvent onEv = flashlightFsm.AddEvent("MP_ON");
-							flashlightFsm.AddGlobalTransition(onEv, "On");
+							flashlightFsm.AddGlobalTransition(onEv, onState);
 							FsmEvent offEv = flashlightFsm.AddEvent("MP_OFF");
-							flashlightFsm.AddGlobalTransition(offEv, "Off");
+							flashlightFsm.AddGlobalTransition(offEv, offState);
 						}
 						catch {}
 
