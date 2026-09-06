@@ -161,8 +161,6 @@ namespace WreckMPExtendedSync
 
 		private bool envelopeMailedSent;
 
-		private bool postOrderBuyWasActive;
-
 		private bool deliveryArrivedSent;
 
 		private bool postOrderPaidSent;
@@ -234,7 +232,6 @@ namespace WreckMPExtendedSync
 				isTelephoneHooked = false;
 				envelopeWasActive = false;
 				envelopeMailedSent = false;
-				postOrderBuyWasActive = false;
 				deliveryArrivedSent = false;
 				postOrderPaidSent = false;
 				suppressOrderWatcher = false;
@@ -687,21 +684,6 @@ namespace WreckMPExtendedSync
 							}
 						}
 						isMailboxHooked = true;
-					}
-				}
-				if (!postOrderBuyWasActive && !postOrderPaidSent)
-				{
-					PlayMakerFSM payFsm;
-					GameObject postOrderBuyObj = FindPostOrderBuy(out payFsm);
-					if (postOrderBuyObj != null && (postOrderBuyObj.activeSelf || postOrderBuyObj.activeInHierarchy))
-					{
-						postOrderBuyWasActive = true;
-						foreach (var r in postOrderBuyObj.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
-						foreach (var c in postOrderBuyObj.GetComponentsInChildren<Collider>(true)) c.enabled = true;
-						if (!isNetworkApplying && !deliveryArrivedSent)
-						{
-							BroadcastDeliveryReady();
-						}
 					}
 				}
 				if (!isTelephoneHooked)
@@ -1318,40 +1300,6 @@ namespace WreckMPExtendedSync
 			}
 		}
 
-		public void RestorePostOrderBuyVisuals()
-		{
-			try
-			{
-				PlayMakerFSM payFsm;
-				GameObject postOrderBuyObj = FindPostOrderBuy(out payFsm);
-				if (postOrderBuyObj != null)
-				{
-					postOrderBuyObj.SetActive(true);
-					foreach (var r in postOrderBuyObj.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
-					foreach (var c in postOrderBuyObj.GetComponentsInChildren<Collider>(true)) c.enabled = true;
-				}
-
-				GameObject store = GameObject.Find("STORE");
-				if (store != null)
-				{
-					Transform[] allTr = store.GetComponentsInChildren<Transform>(true);
-					for (int k = 0; k < allTr.Length; k++)
-					{
-						if (allTr[k] != null && IsReceiptObject(allTr[k].name))
-						{
-							allTr[k].gameObject.SetActive(true);
-							foreach (var r in allTr[k].GetComponentsInChildren<Renderer>(true)) r.enabled = true;
-							foreach (var c in allTr[k].GetComponentsInChildren<Collider>(true)) c.enabled = true;
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				ModConsole.Error("[NetPartsDeliverySync] RestorePostOrderBuyVisuals error: " + ex.Message);
-			}
-		}
-
 		public void BroadcastDeliveryReady()
 		{
 			if (isNetworkApplying || deliveryArrivedSent)
@@ -1359,7 +1307,6 @@ namespace WreckMPExtendedSync
 				return;
 			}
 			deliveryArrivedSent = true;
-			postOrderBuyWasActive = true;
 
 			PlayMakerArrayListProxy proxy = cachedOrderList ?? FindOrderList();
 			if (proxy != null && proxy.arrayList != null && proxy.arrayList.Count > 0)
@@ -1385,10 +1332,7 @@ namespace WreckMPExtendedSync
 			}
 			lastOrderItems.RemoveAll(s => string.IsNullOrEmpty(s) || string.IsNullOrEmpty(s.Trim()));
 
-			RestorePostOrderBuyVisuals();
-			Vector3 storePos = new Vector3(-1551.5f, 4.5f, 1182.8f);
-			StartCoroutine(RegisterUnpackedBoxesCoroutine(storePos, isPayer: false));
-			FileLogger.WriteLine("TX DeliveryReady: activating receipt + boxes hook (" + lastOrderItems.Count + " items: " + string.Join(", ", lastOrderItems.ToArray()) + ")", "INFO");
+			FileLogger.WriteLine("TX DeliveryReady: (" + lastOrderItems.Count + " items: " + string.Join(", ", lastOrderItems.ToArray()) + ")", "INFO");
 
 			float curPrice = -1f;
 			PlayMakerFSM payFsm = cachedPostOrderPayFsm;
@@ -1507,7 +1451,6 @@ namespace WreckMPExtendedSync
 			}
 			lastPostOrderPayBroadcastTime = Time.time;
 			postOrderPaidSent = true;
-			postOrderBuyWasActive = false;
 			PlayMakerArrayListProxy proxy = FindOrderList();
 			if (proxy != null && proxy.arrayList != null && proxy.arrayList.Count > 0)
 			{
@@ -1554,7 +1497,6 @@ namespace WreckMPExtendedSync
 				ExtendedSyncDebugHUD.Log("<color=#33ff33>OUT [PARTS]: Заказ деталей оплачен на кассе! (" + lastOrderItems.Count + " дет.)</color>");
 			}
 			CleanupAllPostOrderBuyObjects();
-			StartCoroutine(RegisterUnpackedBoxesCoroutine(new Vector3(-1551.5f, 4.5f, 1182.8f), isPayer: true));
 		}
 
 		private void OnReceivePostOrderPay(GameEventReader reader)
@@ -1608,7 +1550,6 @@ namespace WreckMPExtendedSync
 			try
 			{
 				postOrderPaidSent = true;
-				postOrderBuyWasActive = false;
 				suppressPayWatcher = true;
 				if (items.Count > 0)
 				{
@@ -1686,7 +1627,6 @@ namespace WreckMPExtendedSync
 
 		public void CleanupAllPostOrderBuyObjects()
 		{
-			postOrderBuyWasActive = false;
 			int count = 0;
 			try
 			{
@@ -1773,87 +1713,6 @@ namespace WreckMPExtendedSync
 			}
 		}
 
-
-		public IEnumerator RegisterUnpackedBoxesCoroutine(Vector3 pos, bool isPayer)
-		{
-			yield return new WaitForSeconds(0.4f);
-			ScanAndHookParcels();
-
-			PlayMakerFSM[] array = UnityEngine.Object.FindObjectsOfType<PlayMakerFSM>();
-			if (array != null)
-			{
-				for (int k = 0; k < array.Length; k++)
-				{
-					PlayMakerFSM playMakerFSM = array[k];
-					if (playMakerFSM == null || playMakerFSM.gameObject == null)
-					{
-						continue;
-					}
-					string text = playMakerFSM.gameObject.name;
-					string rootText = (playMakerFSM.transform.root != null) ? playMakerFSM.transform.root.name : "";
-					if (IsParcelBox(text) || IsParcelBox(rootText))
-					{
-						GameObject boxObj = IsParcelBox(text) ? playMakerFSM.gameObject : playMakerFSM.transform.root.gameObject;
-						Rigidbody rbBox = boxObj.GetComponent<Rigidbody>();
-						if (rbBox != null)
-						{
-							ParcelUnboxTracker trk = boxObj.GetComponent<ParcelUnboxTracker>();
-							int itemIndex = -1;
-							string cleanBox = UniversalHandItemSync.GetCleanItemName(boxObj.name);
-							string cleanPartName = cleanBox;
-							if (trk != null)
-							{
-								if (trk.ItemIndex >= 0) itemIndex = trk.ItemIndex;
-								if (!string.IsNullOrEmpty(trk.PartName)) cleanPartName = UniversalHandItemSync.GetCleanItemName(trk.PartName);
-							}
-							if (itemIndex < 0 && lastOrderItems != null && lastOrderItems.Count > 0)
-							{
-								for (int i = 0; i < lastOrderItems.Count; i++)
-								{
-									string oName = UniversalHandItemSync.GetCleanItemName(lastOrderItems[i]);
-									if (string.Equals(oName, cleanBox, StringComparison.OrdinalIgnoreCase) ||
-									    cleanBox.IndexOf(oName, StringComparison.OrdinalIgnoreCase) >= 0 ||
-									    oName.IndexOf(cleanBox, StringComparison.OrdinalIgnoreCase) >= 0)
-									{
-										itemIndex = i;
-										cleanPartName = oName;
-										break;
-									}
-								}
-							}
-							if (itemIndex < 0) itemIndex = 0;
-							if (trk != null)
-							{
-								trk.ItemIndex = itemIndex;
-								trk.PartName = cleanPartName;
-							}
-
-							int hashBox = ("msc_parcel_" + cleanPartName + "_" + itemIndex).GetHashFNV_1a();
-							try
-							{
-								if (NetRigidbodyManager.GetRigidbodyHash(rbBox) == 0)
-								{
-									NetRigidbodyManager.AddRigidbody(rbBox, hashBox);
-								}
-							}
-							catch (Exception ex)
-							{
-								ModConsole.Error("[WreckMP ExtendedSync Error]: " + ex.Message);
-							}
-							if (isPayer)
-							{
-								BetterCheatBoxSyncManager.ResetRigidbodyPhysicsAndClaim(boxObj);
-							}
-							else
-							{
-								BetterCheatBoxSyncManager.ResetRigidbodyPhysicsLocal(boxObj);
-							}
-							BetterCheatBoxSyncManager.UpdateNetRigidbodyCache(boxObj, rbBox.position, rbBox.rotation);
-						}
-					}
-				}
-			}
-		}
 
 		public static bool IsParcelBox(string name)
 		{
